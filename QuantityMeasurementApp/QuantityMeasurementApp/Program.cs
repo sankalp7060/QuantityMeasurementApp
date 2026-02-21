@@ -1,9 +1,10 @@
-﻿using QuantityMeasurementApp.Views;
+﻿using QuantityMeasurementApp.UI.Menus;
 
 namespace QuantityMeasurementApp
 {
     /// <summary>
     /// Main program class - entry point of the application.
+    /// Initializes and displays the main menu.
     /// </summary>
     class Program
     {
@@ -13,8 +14,8 @@ namespace QuantityMeasurementApp
         /// <param name="args">Command line arguments.</param>
         static void Main(string[] args)
         {
-            // Create and display the menu
-            Menu menu = new Menu();
+            // Create and display the main menu
+            MainMenu menu = new MainMenu();
             menu.Display();
         }
     }
