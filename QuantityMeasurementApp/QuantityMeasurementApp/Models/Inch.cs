@@ -2,8 +2,10 @@ using System;
 
 namespace QuantityMeasurementApp.Models
 {
-    // Represents an inch measurement with value-based equality
-    // This class is immutable - once created, its value cannot be changed
+    /// <summary>
+    /// Represents an inch measurement with value-based equality
+    /// This class is immutable - once created, its value cannot be changed
+    /// </summary>
     public class Inch
     {
         // Private field to store the measurement value

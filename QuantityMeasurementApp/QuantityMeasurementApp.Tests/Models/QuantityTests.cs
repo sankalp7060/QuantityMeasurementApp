@@ -3,10 +3,14 @@ using QuantityMeasurementApp.Models;
 
 namespace QuantityMeasurementApp.Tests.Models
 {
+    /// <summary>
+    /// Contains unit tests for Quantity class validating equality logic,
+    /// unit conversions, hash code consistency, and string formatting behavior.
+    /// </summary>
     [TestClass]
     public class QuantityTests
     {
-        // Test: Same unit and same value should be equal
+        // Tests Quantity.Equals(object) for same unit and same value
         [TestMethod]
         public void Equals_SameUnitSameValue_ReturnsTrue()
         {
@@ -16,7 +20,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsTrue(result, "1.0 ft should equal 1.0 ft");
         }
 
-        // Test: Same unit different values should not be equal
+        // Tests Quantity.Equals(object) for same unit with different values
         [TestMethod]
         public void Equals_SameUnitDifferentValue_ReturnsFalse()
         {
@@ -26,7 +30,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsFalse(result, "1.0 ft should not equal 2.0 ft");
         }
 
-        // Test: Inch to Inch same value
+        // Tests Quantity.Equals(object) for Inch to Inch same value
         [TestMethod]
         public void Equals_InchToInchSameValue_ReturnsTrue()
         {
@@ -36,7 +40,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsTrue(result, "1.0 in should equal 1.0 in");
         }
 
-        // Test: Inch to Inch different value
+        // Tests Quantity.Equals(object) for Inch to Inch different value
         [TestMethod]
         public void Equals_InchToInchDifferentValue_ReturnsFalse()
         {
@@ -46,7 +50,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsFalse(result, "1.0 in should not equal 2.0 in");
         }
 
-        // Test: Feet to Inch equivalent values (1 ft = 12 in)
+        // Tests Quantity.Equals(object) for Feet to Inch equivalent values
         [TestMethod]
         public void Equals_FeetToInchEquivalentValue_ReturnsTrue()
         {
@@ -56,7 +60,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsTrue(result, "1.0 ft should equal 12.0 in");
         }
 
-        // Test: Inch to Feet equivalent values (12 in = 1 ft) - Symmetry test
+        // Tests Quantity.Equals(object) for Inch to Feet equivalent values
         [TestMethod]
         public void Equals_InchToFeetEquivalentValue_ReturnsTrue()
         {
@@ -66,7 +70,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsTrue(result, "12.0 in should equal 1.0 ft");
         }
 
-        // Test: Feet to Inch non-equivalent values
+        // Tests Quantity.Equals(object) for non-equivalent Feet and Inch values
         [TestMethod]
         public void Equals_FeetToInchNonEquivalentValue_ReturnsFalse()
         {
@@ -76,7 +80,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsFalse(result, "1.0 ft should not equal 13.0 in");
         }
 
-        // Test: Reflexive property
+        // Tests Quantity.Equals(object) for reflexive property
         [TestMethod]
         public void Equals_SameReference_ReturnsTrue()
         {
@@ -85,7 +89,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsTrue(result, "Object should equal itself");
         }
 
-        // Test: Null comparison
+        // Tests Quantity.Equals(object) for null comparison
         [TestMethod]
         public void Equals_NullComparison_ReturnsFalse()
         {
@@ -94,7 +98,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsFalse(result, "Object should not equal null");
         }
 
-        // Test: Symmetric property
+        // Tests Quantity.Equals(object) for symmetric property
         [TestMethod]
         public void Equals_SymmetricProperty_ReturnsTrue()
         {
@@ -105,7 +109,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsTrue(result1 && result2, "Equality should be symmetric");
         }
 
-        // Test: Transitive property
+        // Tests Quantity.Equals(object) for transitive property
         [TestMethod]
         public void Equals_TransitiveProperty_ReturnsTrue()
         {
@@ -118,7 +122,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsTrue(aEqualsB && bEqualsC && aEqualsC, "Equality should be transitive");
         }
 
-        // Test: Different types should not be equal
+        // Tests Quantity.Equals(object) for different type comparison
         [TestMethod]
         public void Equals_DifferentType_ReturnsFalse()
         {
@@ -128,7 +132,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsFalse(result, "Quantity should not equal object of different type");
         }
 
-        // Test: Consistent property
+        // Tests Quantity.Equals(object) for consistent repeated calls
         [TestMethod]
         public void Equals_ConsistentProperty_ReturnsTrue()
         {
@@ -143,7 +147,7 @@ namespace QuantityMeasurementApp.Tests.Models
             );
         }
 
-        // Test: Floating point precision with very close values
+        // Tests Quantity.Equals(object) for floating point precision handling
         [TestMethod]
         public void Equals_FloatingPointPrecision_HandlesCorrectly()
         {
@@ -153,7 +157,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsFalse(result, "Even very close values should be considered different");
         }
 
-        // Test: GetHashCode for equal objects
+        // Tests Quantity.GetHashCode() for equal objects
         [TestMethod]
         public void GetHashCode_EqualObjects_ReturnsSameHashCode()
         {
@@ -164,7 +168,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual(hash1, hash2);
         }
 
-        // Test: GetHashCode for different objects
+        // Tests Quantity.GetHashCode() for different objects
         [TestMethod]
         public void GetHashCode_DifferentObjects_ReturnsDifferentHashCode()
         {
@@ -175,7 +179,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreNotEqual(hash1, hash2);
         }
 
-        // Test: GetHashCode for equivalent cross-unit objects
+        // Tests Quantity.GetHashCode() for equivalent cross-unit objects
         [TestMethod]
         public void GetHashCode_EquivalentCrossUnitObjects_ReturnsSameHashCode()
         {
@@ -186,7 +190,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual(hash1, hash2, "Equivalent quantities should have equal hash codes");
         }
 
-        // Test: ToString returns formatted string for feet
+        // Tests Quantity.ToString() for Feet formatting
         [TestMethod]
         public void ToString_FeetUnit_ReturnsFormattedString()
         {
@@ -195,7 +199,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual("7.5 ft", result);
         }
 
-        // Test: ToString returns formatted string for inches
+        // Tests Quantity.ToString() for Inch formatting
         [TestMethod]
         public void ToString_InchUnit_ReturnsFormattedString()
         {

@@ -2,7 +2,9 @@ using System;
 
 namespace QuantityMeasurementApp.Models
 {
-    // Enum representing different length units with their conversion factors to feet (base unit)
+    /// <summary>
+    /// Enum representing different length units with their conversion factors to feet (base unit)
+    /// </summary>
     public enum LengthUnit
     {
         FEET, // Base unit - conversion factor 1.0
@@ -12,7 +14,9 @@ namespace QuantityMeasurementApp.Models
         // More precise conversion: 1 inch = 2.54 cm exactly
     }
 
-    // Extension class to add conversion factor functionality to LengthUnit enum
+    /// <summary>
+    /// Extension class to add conversion factor functionality to LengthUnit enum
+    /// </summary>
     public static class LengthUnitExtensions
     {
         // Conversion factors to feet (base unit)

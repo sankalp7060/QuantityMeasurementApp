@@ -4,9 +4,14 @@ using QuantityMeasurementApp.Models;
 
 namespace QuantityMeasurementApp.Tests.Models
 {
+    /// <summary>
+    /// Contains unit tests for validating LengthUnit enum methods including conversion factors,
+    /// unit symbols, unit names, and exception handling for invalid units.
+    /// </summary>
     [TestClass]
     public class LengthUnitTests
     {
+        // Tests LengthUnit.GetConversionFactorToFeet() for FEET
         [TestMethod]
         public void GetConversionFactorToFeet_FeetUnit_ReturnsOne()
         {
@@ -14,6 +19,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual(1.0, factor, 0.0001);
         }
 
+        // Tests LengthUnit.GetConversionFactorToFeet() for INCH
         [TestMethod]
         public void GetConversionFactorToFeet_InchUnit_ReturnsOneTwelfth()
         {
@@ -21,6 +27,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual(1.0 / 12.0, factor, 0.0001);
         }
 
+        // Tests LengthUnit.GetConversionFactorToFeet() for YARD
         [TestMethod]
         public void GetConversionFactorToFeet_YardUnit_ReturnsThree()
         {
@@ -28,6 +35,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual(3.0, factor, 0.0001);
         }
 
+        // Tests LengthUnit.GetConversionFactorToFeet() for CENTIMETER
         [TestMethod]
         public void GetConversionFactorToFeet_CentimeterUnit_ReturnsCorrectValue()
         {
@@ -37,6 +45,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual(expected, factor, 0.0000001);
         }
 
+        // Tests LengthUnit.GetUnitSymbol() for FEET
         [TestMethod]
         public void GetUnitSymbol_FeetUnit_ReturnsFt()
         {
@@ -44,6 +53,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual("ft", symbol);
         }
 
+        // Tests LengthUnit.GetUnitSymbol() for INCH
         [TestMethod]
         public void GetUnitSymbol_InchUnit_ReturnsIn()
         {
@@ -51,6 +61,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual("in", symbol);
         }
 
+        // Tests LengthUnit.GetUnitSymbol() for YARD
         [TestMethod]
         public void GetUnitSymbol_YardUnit_ReturnsYd()
         {
@@ -58,6 +69,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual("yd", symbol);
         }
 
+        // Tests LengthUnit.GetUnitSymbol() for CENTIMETER
         [TestMethod]
         public void GetUnitSymbol_CentimeterUnit_ReturnsCm()
         {
@@ -65,6 +77,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual("cm", symbol);
         }
 
+        // Tests LengthUnit.GetUnitName() for FEET
         [TestMethod]
         public void GetUnitName_FeetUnit_ReturnsFeet()
         {
@@ -72,6 +85,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual("feet", name);
         }
 
+        // Tests LengthUnit.GetUnitName() for INCH
         [TestMethod]
         public void GetUnitName_InchUnit_ReturnsInches()
         {
@@ -79,6 +93,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual("inches", name);
         }
 
+        // Tests LengthUnit.GetUnitName() for YARD
         [TestMethod]
         public void GetUnitName_YardUnit_ReturnsYards()
         {
@@ -86,6 +101,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual("yards", name);
         }
 
+        // Tests LengthUnit.GetUnitName() for CENTIMETER
         [TestMethod]
         public void GetUnitName_CentimeterUnit_ReturnsCentimeters()
         {
@@ -93,6 +109,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual("centimeters", name);
         }
 
+        // Tests LengthUnit.GetConversionFactorToFeet() for invalid enum value
         [TestMethod]
         public void GetConversionFactorToFeet_InvalidUnit_ThrowsException()
         {

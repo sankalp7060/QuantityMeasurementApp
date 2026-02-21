@@ -2,8 +2,10 @@ using System;
 
 namespace QuantityMeasurementApp.Models
 {
-    // Represents a feet measurement with value-based equality
-    // This class is immutable - once created, its value cannot be changed
+    /// <summary>
+    /// Represents a feet measurement with value-based equality
+    /// This class is immutable - once created, its value cannot be changed
+    /// </summary>
     public class Feet
     {
         // Private field to store the measurement value
