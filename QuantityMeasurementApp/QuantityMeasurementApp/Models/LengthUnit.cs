@@ -2,14 +2,18 @@ using System;
 
 namespace QuantityMeasurementApp.Models
 {
-    // Enum representing different length units with their conversion factors to feet (base unit)
+    /// <summary>
+    /// Enum representing different length units with their conversion factors to feet (base unit)
+    /// </summary>
     public enum LengthUnit
     {
         FEET, // Base unit - conversion factor 1.0
         INCH, // 1 foot = 12 inches, so 1 inch = 1/12 feet
     }
 
-    // Extension class to add conversion factor functionality to LengthUnit enum
+    /// <summary>
+    /// Extension class to add conversion factor functionality to LengthUnit enum
+    /// </summary>
     public static class LengthUnitExtensions
     {
         // Conversion factors to feet (base unit)

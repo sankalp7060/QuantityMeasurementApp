@@ -2,8 +2,10 @@ using System;
 
 namespace QuantityMeasurementApp.Models
 {
-    // Generic Quantity class that represents any measurement with a value and unit
-    // This eliminates code duplication from separate Feet and Inch classes
+    /// <summary>
+    /// Generic Quantity class that represents any measurement with a value and unit
+    /// This eliminates code duplication from separate Feet and Inch classes
+    /// </summary>
     public class Quantity
     {
         // Private fields for value and unit

@@ -3,6 +3,12 @@ using QuantityMeasurementApp.Models;
 
 namespace QuantityMeasurementApp.Tests.Models
 {
+    /// <summary>
+    /// Contains unit tests for the Quantity class to verify equality, hash code consistency,
+    /// unit conversions between feet and inches, object comparison properties (reflexive,
+    /// symmetric, transitive, consistent), null and type safety checks, floating point precision handling,
+    /// and string representation formatting.
+    /// </summary>
     [TestClass]
     public class QuantityTests
     {

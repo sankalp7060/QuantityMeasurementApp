@@ -4,6 +4,11 @@ using QuantityMeasurementApp.Services;
 
 namespace QuantityMeasurementApp.Tests.Services
 {
+    /// <summary>
+    /// Contains unit tests for the QuantityMeasurementService class to verify
+    /// quantity comparison logic, parsing functionality, cross-unit equality handling,
+    /// static equality checks, and backward compatibility support for Feet and Inch models.
+    /// </summary>
     [TestClass]
     public class QuantityMeasurementServiceTests
     {
@@ -17,6 +22,7 @@ namespace QuantityMeasurementApp.Tests.Services
 
         #region Generic Quantity Tests
 
+        // Tests QuantityMeasurementService.CompareQuantityEquality method with equal values and same unit
         [TestMethod]
         public void CompareQuantityEquality_BothNonNullEqualValues_SameUnit_ReturnsTrue()
         {
@@ -26,6 +32,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.IsTrue(result);
         }
 
+        // Tests QuantityMeasurementService.CompareQuantityEquality method with different values and same unit
         [TestMethod]
         public void CompareQuantityEquality_BothNonNullDifferentValues_SameUnit_ReturnsFalse()
         {
@@ -35,6 +42,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.IsFalse(result);
         }
 
+        // Tests QuantityMeasurementService.CompareQuantityEquality method with equivalent cross-unit values
         [TestMethod]
         public void CompareQuantityEquality_CrossUnitEquivalentValues_ReturnsTrue()
         {
@@ -44,6 +52,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.IsTrue(result);
         }
 
+        // Tests QuantityMeasurementService.CompareQuantityEquality method with non-equivalent cross-unit values
         [TestMethod]
         public void CompareQuantityEquality_CrossUnitNonEquivalentValues_ReturnsFalse()
         {
@@ -53,6 +62,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.IsFalse(result);
         }
 
+        // Tests QuantityMeasurementService.CompareQuantityEquality method when first parameter is null
         [TestMethod]
         public void CompareQuantityEquality_FirstParameterNull_ReturnsFalse()
         {
@@ -62,6 +72,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.IsFalse(result);
         }
 
+        // Tests QuantityMeasurementService.CompareQuantityEquality method when second parameter is null
         [TestMethod]
         public void CompareQuantityEquality_SecondParameterNull_ReturnsFalse()
         {
@@ -71,6 +82,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.IsFalse(result);
         }
 
+        // Tests QuantityMeasurementService.CompareQuantityEquality method when both parameters are null
         [TestMethod]
         public void CompareQuantityEquality_BothParametersNull_ReturnsFalse()
         {
@@ -80,6 +92,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.IsFalse(result);
         }
 
+        // Tests QuantityMeasurementService.ParseQuantityInput method with valid numeric string
         [TestMethod]
         public void ParseQuantityInput_ValidNumericString_ReturnsQuantityObject()
         {
@@ -90,6 +103,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.AreEqual(LengthUnit.FEET, result.Unit);
         }
 
+        // Tests QuantityMeasurementService.ParseQuantityInput method with null input
         [TestMethod]
         public void ParseQuantityInput_NullInput_ReturnsNull()
         {
@@ -98,6 +112,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.IsNull(result);
         }
 
+        // Tests QuantityMeasurementService.ParseQuantityInput method with empty string
         [TestMethod]
         public void ParseQuantityInput_EmptyString_ReturnsNull()
         {
@@ -106,6 +121,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.IsNull(result);
         }
 
+        // Tests QuantityMeasurementService.ParseQuantityInput method with whitespace input
         [TestMethod]
         public void ParseQuantityInput_Whitespace_ReturnsNull()
         {
@@ -114,6 +130,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.IsNull(result);
         }
 
+        // Tests QuantityMeasurementService.ParseQuantityInput method with non-numeric string
         [TestMethod]
         public void ParseQuantityInput_NonNumericString_ReturnsNull()
         {
@@ -122,6 +139,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.IsNull(result);
         }
 
+        // Tests QuantityMeasurementService.ParseQuantityInput method with negative number
         [TestMethod]
         public void ParseQuantityInput_NegativeNumber_ReturnsQuantityObject()
         {
@@ -131,6 +149,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.AreEqual(-2.5, result!.Value);
         }
 
+        // Tests QuantityMeasurementService.ParseQuantityInput method with zero value
         [TestMethod]
         public void ParseQuantityInput_Zero_ReturnsQuantityObject()
         {
@@ -140,6 +159,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.AreEqual(0, result!.Value);
         }
 
+        // Tests static QuantityMeasurementService.AreQuantitiesEqual method with equal values and same unit
         [TestMethod]
         public void AreQuantitiesEqual_EqualValues_SameUnit_ReturnsTrue()
         {
@@ -152,6 +172,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.IsTrue(result);
         }
 
+        // Tests static QuantityMeasurementService.AreQuantitiesEqual method with different values and same unit
         [TestMethod]
         public void AreQuantitiesEqual_DifferentValues_SameUnit_ReturnsFalse()
         {
@@ -164,6 +185,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.IsFalse(result);
         }
 
+        // Tests static QuantityMeasurementService.AreQuantitiesEqual method with equivalent cross-unit values
         [TestMethod]
         public void AreQuantitiesEqual_CrossUnitEquivalentValues_ReturnsTrue()
         {
@@ -176,6 +198,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.IsTrue(result);
         }
 
+        // Tests static QuantityMeasurementService.AreQuantitiesEqual method with non-equivalent cross-unit values
         [TestMethod]
         public void AreQuantitiesEqual_CrossUnitNonEquivalentValues_ReturnsFalse()
         {
@@ -192,6 +215,7 @@ namespace QuantityMeasurementApp.Tests.Services
 
         #region Backward Compatibility Tests (Feet)
 
+        // Tests QuantityMeasurementService.CompareFeetEquality method
         [TestMethod]
         public void CompareFeetEquality_BothNonNullEqualValues_ReturnsTrue()
         {
@@ -201,6 +225,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.IsTrue(result);
         }
 
+        // Tests QuantityMeasurementService.ParseFeetInput method
         [TestMethod]
         public void ParseFeetInput_ValidNumericString_ReturnsFeetObject()
         {
@@ -214,6 +239,7 @@ namespace QuantityMeasurementApp.Tests.Services
 
         #region Backward Compatibility Tests (Inch)
 
+        // Tests QuantityMeasurementService.CompareInchEquality method
         [TestMethod]
         public void CompareInchEquality_BothNonNullEqualValues_ReturnsTrue()
         {
@@ -223,6 +249,7 @@ namespace QuantityMeasurementApp.Tests.Services
             Assert.IsTrue(result);
         }
 
+        // Tests QuantityMeasurementService.ParseInchInput method
         [TestMethod]
         public void ParseInchInput_ValidNumericString_ReturnsInchObject()
         {

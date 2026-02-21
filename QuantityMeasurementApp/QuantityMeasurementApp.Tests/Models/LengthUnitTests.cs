@@ -4,9 +4,15 @@ using QuantityMeasurementApp.Models;
 
 namespace QuantityMeasurementApp.Tests.Models
 {
+    /// <summary>
+    /// Unit tests for the LengthUnit enum and LengthUnitExtensions class.
+    /// These tests validate GetConversionFactorToFeet() and GetUnitSymbol()
+    /// extension methods implemented for LengthUnit in QuantityMeasurementApp.Models.
+    /// </summary>
     [TestClass]
     public class LengthUnitTests
     {
+        // Tests LengthUnitExtensions.GetConversionFactorToFeet() method for FEET unit
         [TestMethod]
         public void GetConversionFactorToFeet_FeetUnit_ReturnsOne()
         {
@@ -14,6 +20,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual(1.0, factor, 0.0001);
         }
 
+        // Tests LengthUnitExtensions.GetConversionFactorToFeet() method for INCH unit
         [TestMethod]
         public void GetConversionFactorToFeet_InchUnit_ReturnsOneTwelfth()
         {
@@ -21,6 +28,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual(1.0 / 12.0, factor, 0.0001);
         }
 
+        // Tests LengthUnitExtensions.GetUnitSymbol() method for FEET unit
         [TestMethod]
         public void GetUnitSymbol_FeetUnit_ReturnsFt()
         {
@@ -28,6 +36,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual("ft", symbol);
         }
 
+        // Tests LengthUnitExtensions.GetUnitSymbol() method for INCH unit
         [TestMethod]
         public void GetUnitSymbol_InchUnit_ReturnsIn()
         {
@@ -35,6 +44,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual("in", symbol);
         }
 
+        // Tests LengthUnitExtensions.GetConversionFactorToFeet() method with invalid enum value
         [TestMethod]
         public void GetConversionFactorToFeet_InvalidUnit_ThrowsException()
         {

@@ -3,9 +3,15 @@ using QuantityMeasurementApp.Models;
 
 namespace QuantityMeasurementApp.Tests.Models
 {
+    /// <summary>
+    /// Unit tests for the Feet model class.
+    /// These tests validate the behavior of Equals(), GetHashCode(), and ToString()
+    /// methods implemented in the Feet class from QuantityMeasurementApp.Models.
+    /// </summary>
     [TestClass]
     public class FeetTests
     {
+        // Tests Feet.Equals(object?) method for same value comparison
         [TestMethod]
         public void Equals_SameValue_ReturnsTrue()
         {
@@ -15,6 +21,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsTrue(result, "1.0 ft should equal 1.0 ft");
         }
 
+        // Tests Feet.Equals(object?) method for different value comparison
         [TestMethod]
         public void Equals_DifferentValue_ReturnsFalse()
         {
@@ -24,6 +31,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsFalse(result, "1.0 ft should not equal 2.0 ft");
         }
 
+        // Tests Feet.Equals(object?) method for same reference comparison
         [TestMethod]
         public void Equals_SameReference_ReturnsTrue()
         {
@@ -32,6 +40,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsTrue(result, "Object should equal itself");
         }
 
+        // Tests Feet.Equals(object?) method when compared with null
         [TestMethod]
         public void Equals_NullComparison_ReturnsFalse()
         {
@@ -40,6 +49,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsFalse(result, "Object should not equal null");
         }
 
+        // Tests symmetric property of Feet.Equals(object?) method
         [TestMethod]
         public void Equals_SymmetricProperty_ReturnsTrue()
         {
@@ -50,6 +60,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsTrue(result1 && result2, "Equality should be symmetric");
         }
 
+        // Tests transitive property of Feet.Equals(object?) method
         [TestMethod]
         public void Equals_TransitiveProperty_ReturnsTrue()
         {
@@ -62,6 +73,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsTrue(aEqualsB && bEqualsC && aEqualsC, "Equality should be transitive");
         }
 
+        // Tests Feet.Equals(object?) method when compared with different object type
         [TestMethod]
         public void Equals_DifferentType_ReturnsFalse()
         {
@@ -71,6 +83,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsFalse(result, "Feet should not equal object of different type");
         }
 
+        // Tests consistency of Feet.Equals(object?) method across multiple calls
         [TestMethod]
         public void Equals_ConsistentProperty_ReturnsTrue()
         {
@@ -85,6 +98,7 @@ namespace QuantityMeasurementApp.Tests.Models
             );
         }
 
+        // Tests floating-point precision handling in Feet.Equals(object?) method
         [TestMethod]
         public void Equals_FloatingPointPrecision_HandlesCorrectly()
         {
@@ -94,6 +108,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.IsFalse(result, "Even very close values should be considered different");
         }
 
+        // Tests Feet.GetHashCode() method for equal objects
         [TestMethod]
         public void GetHashCode_EqualObjects_ReturnsSameHashCode()
         {
@@ -104,6 +119,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreEqual(hash1, hash2, "Equal objects should have equal hash codes");
         }
 
+        // Tests Feet.GetHashCode() method for different objects
         [TestMethod]
         public void GetHashCode_DifferentObjects_ReturnsDifferentHashCode()
         {
@@ -114,6 +130,7 @@ namespace QuantityMeasurementApp.Tests.Models
             Assert.AreNotEqual(hash1, hash2, "Different objects should have different hash codes");
         }
 
+        // Tests Feet.ToString() method for correct string formatting
         [TestMethod]
         public void ToString_ReturnsFormattedString()
         {

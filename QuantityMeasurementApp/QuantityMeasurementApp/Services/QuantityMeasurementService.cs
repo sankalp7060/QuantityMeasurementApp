@@ -2,8 +2,10 @@ using QuantityMeasurementApp.Models;
 
 namespace QuantityMeasurementApp.Services
 {
-    // Service class for quantity measurement operations
-    // Updated to use the generic Quantity class instead of separate Feet and Inch classes
+    /// <summary>
+    /// Service class for quantity measurement operations
+    /// Updated to use the generic Quantity class instead of separate Feet and Inch classes
+    /// </summary>
     public class QuantityMeasurementService
     {
         // Compares two quantity measurements for equality
