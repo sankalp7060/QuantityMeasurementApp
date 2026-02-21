@@ -1,0 +1,260 @@
+using System;
+
+namespace QuantityMeasurementApp.Models
+{
+    /// <summary>
+    /// Represents a quantity with a value and unit of measurement.
+    /// This class now delegates all conversion logic to the LengthUnit enum,
+    /// following the Single Responsibility Principle.
+    /// It focuses solely on value comparison and arithmetic operations.
+    /// </summary>
+    public class Quantity
+    {
+        // Private fields for value and unit
+        private readonly double _value;
+        private readonly LengthUnit _unit;
+
+        /// <summary>
+        /// Initializes a new instance of the Quantity class.
+        /// </summary>
+        /// <param name="value">The numeric value of the measurement.</param>
+        /// <param name="unit">The unit of measurement.</param>
+        /// <exception cref="ArgumentException">Thrown when value is invalid or unit is invalid.</exception>
+        public Quantity(double value, LengthUnit unit)
+        {
+            ValidateValue(value);
+            ValidateUnit(unit);
+
+            _value = value;
+            _unit = unit;
+        }
+
+        /// <summary>
+        /// Gets the measurement value.
+        /// </summary>
+        public double Value => _value;
+
+        /// <summary>
+        /// Gets the measurement unit.
+        /// </summary>
+        public LengthUnit Unit => _unit;
+
+        /// <summary>
+        /// Converts the current quantity to a target unit.
+        /// Delegates conversion logic to the LengthUnit enum.
+        /// </summary>
+        /// <param name="targetUnit">The unit to convert to.</param>
+        /// <returns>A new Quantity object with the converted value and target unit.</returns>
+        /// <exception cref="ArgumentException">Thrown when target unit is invalid.</exception>
+        public Quantity ConvertTo(LengthUnit targetUnit)
+        {
+            ValidateUnit(targetUnit);
+
+            // Delegate conversion to the unit's conversion methods
+            double valueInFeet = _unit.ConvertToBaseUnit(_value);
+            double convertedValue = targetUnit.ConvertFromBaseUnit(valueInFeet);
+
+            return new Quantity(convertedValue, targetUnit);
+        }
+
+        /// <summary>
+        /// Static method to convert a value from one unit to another.
+        /// Delegates conversion logic to the LengthUnit enum.
+        /// </summary>
+        /// <param name="value">The value to convert.</param>
+        /// <param name="sourceUnit">The source unit.</param>
+        /// <param name="targetUnit">The target unit.</param>
+        /// <returns>The converted value as a double.</returns>
+        /// <exception cref="ArgumentException">Thrown when value is invalid or units are invalid.</exception>
+        public static double Convert(double value, LengthUnit sourceUnit, LengthUnit targetUnit)
+        {
+            ValidateValue(value);
+            ValidateUnit(sourceUnit);
+            ValidateUnit(targetUnit);
+
+            // Use the unit's direct conversion method
+            return sourceUnit.Convert(targetUnit, value);
+        }
+
+        /// <summary>
+        /// Private utility method to add two quantities in base unit and convert to target unit.
+        /// This method centralizes the addition logic to avoid code duplication (DRY principle).
+        /// </summary>
+        /// <param name="first">First quantity.</param>
+        /// <param name="second">Second quantity.</param>
+        /// <param name="targetUnit">Target unit for result.</param>
+        /// <returns>A new Quantity object with the sum in target unit.</returns>
+        private static Quantity AddInBaseUnit(
+            Quantity first,
+            Quantity second,
+            LengthUnit targetUnit
+        )
+        {
+            // Delegate conversion to the unit's conversion methods
+            double firstInBase = first._unit.ConvertToBaseUnit(first._value);
+            double secondInBase = second._unit.ConvertToBaseUnit(second._value);
+
+            // Add in base unit
+            double sumInBase = firstInBase + secondInBase;
+
+            // Convert sum to target unit using unit's conversion method
+            double sumInTarget = targetUnit.ConvertFromBaseUnit(sumInBase);
+
+            return new Quantity(sumInTarget, targetUnit);
+        }
+
+        /// <summary>
+        /// Adds another quantity to this quantity and returns the result in the unit of this quantity.
+        /// (UC6 - Implicit target unit)
+        /// </summary>
+        /// <param name="other">The other quantity to add.</param>
+        /// <returns>A new Quantity object representing the sum in this quantity's unit.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when other quantity is null.</exception>
+        public Quantity Add(Quantity other)
+        {
+            if (other == null)
+                throw new ArgumentNullException(nameof(other), "Other quantity cannot be null");
+
+            return Add(other, this._unit);
+        }
+
+        /// <summary>
+        /// Adds another quantity to this quantity and returns the result in the specified target unit.
+        /// (UC7 - Explicit target unit specification)
+        /// </summary>
+        /// <param name="other">The other quantity to add.</param>
+        /// <param name="targetUnit">The unit for the result.</param>
+        /// <returns>A new Quantity object representing the sum in the target unit.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when other quantity is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when target unit is invalid.</exception>
+        public Quantity Add(Quantity other, LengthUnit targetUnit)
+        {
+            if (other == null)
+                throw new ArgumentNullException(nameof(other), "Other quantity cannot be null");
+
+            ValidateUnit(targetUnit);
+
+            return AddInBaseUnit(this, other, targetUnit);
+        }
+
+        /// <summary>
+        /// Static method to add two quantities and return the result in the specified target unit.
+        /// (UC7 - Explicit target unit specification with Quantity objects)
+        /// </summary>
+        /// <param name="quantity1">First quantity.</param>
+        /// <param name="quantity2">Second quantity.</param>
+        /// <param name="targetUnit">The unit for the result.</param>
+        /// <returns>A new Quantity object representing the sum in the target unit.</returns>
+        /// <exception cref="ArgumentNullException">Thrown when either quantity is null.</exception>
+        /// <exception cref="ArgumentException">Thrown when target unit is invalid.</exception>
+        public static Quantity Add(Quantity quantity1, Quantity quantity2, LengthUnit targetUnit)
+        {
+            if (quantity1 == null)
+                throw new ArgumentNullException(nameof(quantity1), "First quantity cannot be null");
+            if (quantity2 == null)
+                throw new ArgumentNullException(
+                    nameof(quantity2),
+                    "Second quantity cannot be null"
+                );
+
+            ValidateUnit(targetUnit);
+
+            return AddInBaseUnit(quantity1, quantity2, targetUnit);
+        }
+
+        /// <summary>
+        /// Static method to add two values with their units and return the result in the specified target unit.
+        /// (UC7 - Explicit target unit specification with raw values)
+        /// </summary>
+        /// <param name="value1">First value.</param>
+        /// <param name="unit1">Unit of first value.</param>
+        /// <param name="value2">Second value.</param>
+        /// <param name="unit2">Unit of second value.</param>
+        /// <param name="targetUnit">The unit for the result.</param>
+        /// <returns>A new Quantity object representing the sum in the target unit.</returns>
+        /// <exception cref="ArgumentException">Thrown when values or units are invalid.</exception>
+        public static Quantity Add(
+            double value1,
+            LengthUnit unit1,
+            double value2,
+            LengthUnit unit2,
+            LengthUnit targetUnit
+        )
+        {
+            Quantity quantity1 = new Quantity(value1, unit1);
+            Quantity quantity2 = new Quantity(value2, unit2);
+
+            return Add(quantity1, quantity2, targetUnit);
+        }
+
+        /// <summary>
+        /// Determines whether the specified object is equal to the current Quantity object.
+        /// Delegates conversion to unit's conversion methods for comparison.
+        /// </summary>
+        /// <param name="obj">The object to compare with the current object.</param>
+        /// <returns>true if the specified object is equal to the current object; otherwise, false.</returns>
+        public override bool Equals(object? obj)
+        {
+            if (ReferenceEquals(this, obj))
+                return true;
+
+            if (obj is null || GetType() != obj.GetType())
+                return false;
+
+            Quantity other = (Quantity)obj;
+
+            // Delegate conversion to unit's conversion methods
+            double thisInFeet = _unit.ConvertToBaseUnit(_value);
+            double otherInFeet = other._unit.ConvertToBaseUnit(other._value);
+
+            return LengthUnitExtensions.AreApproximatelyEqual(thisInFeet, otherInFeet);
+        }
+
+        /// <summary>
+        /// Serves as the default hash function.
+        /// </summary>
+        /// <returns>A hash code for the current object.</returns>
+        public override int GetHashCode()
+        {
+            double valueInFeet = _unit.ConvertToBaseUnit(_value);
+            return Math.Round(valueInFeet, 6).GetHashCode();
+        }
+
+        /// <summary>
+        /// Returns a string representation of the Quantity object.
+        /// </summary>
+        /// <returns>A string in the format "{value} {unitSymbol}".</returns>
+        public override string ToString()
+        {
+            return $"{_value} {_unit.GetUnitSymbol()}";
+        }
+
+        /// <summary>
+        /// Validates that a unit is valid.
+        /// </summary>
+        /// <param name="unit">The unit to validate.</param>
+        /// <exception cref="ArgumentException">Thrown when unit is invalid.</exception>
+        private static void ValidateUnit(LengthUnit unit)
+        {
+            if (!Enum.IsDefined(typeof(LengthUnit), unit))
+            {
+                throw new ArgumentException($"Invalid unit: {unit}");
+            }
+        }
+
+        /// <summary>
+        /// Validates that a value is finite.
+        /// </summary>
+        /// <param name="value">The value to validate.</param>
+        /// <exception cref="ArgumentException">Thrown when value is NaN or Infinity.</exception>
+        private static void ValidateValue(double value)
+        {
+            if (double.IsNaN(value) || double.IsInfinity(value))
+            {
+                throw new ArgumentException(
+                    $"Invalid value: {value}. Value must be a finite number."
+                );
+            }
+        }
+    }
+}
