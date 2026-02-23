@@ -163,12 +163,7 @@ namespace QuantityMeasurementApp.Tests.Services
         [TestMethod]
         public void AreQuantitiesEqual_EqualValues_SameUnit_ReturnsTrue()
         {
-            bool result = QuantityMeasurementService.AreQuantitiesEqual(
-                1.0,
-                LengthUnit.FEET,
-                1.0,
-                LengthUnit.FEET
-            );
+            bool result = _service.AreQuantitiesEqual(1.0, LengthUnit.FEET, 1.0, LengthUnit.FEET);
             Assert.IsTrue(result);
         }
 
@@ -176,12 +171,7 @@ namespace QuantityMeasurementApp.Tests.Services
         [TestMethod]
         public void AreQuantitiesEqual_DifferentValues_SameUnit_ReturnsFalse()
         {
-            bool result = QuantityMeasurementService.AreQuantitiesEqual(
-                1.0,
-                LengthUnit.FEET,
-                2.0,
-                LengthUnit.FEET
-            );
+            bool result = _service.AreQuantitiesEqual(1.0, LengthUnit.FEET, 2.0, LengthUnit.FEET);
             Assert.IsFalse(result);
         }
 
@@ -189,12 +179,7 @@ namespace QuantityMeasurementApp.Tests.Services
         [TestMethod]
         public void AreQuantitiesEqual_CrossUnitEquivalentValues_ReturnsTrue()
         {
-            bool result = QuantityMeasurementService.AreQuantitiesEqual(
-                1.0,
-                LengthUnit.FEET,
-                12.0,
-                LengthUnit.INCH
-            );
+            bool result = _service.AreQuantitiesEqual(1.0, LengthUnit.FEET, 12.0, LengthUnit.INCH);
             Assert.IsTrue(result);
         }
 
@@ -202,12 +187,7 @@ namespace QuantityMeasurementApp.Tests.Services
         [TestMethod]
         public void AreQuantitiesEqual_CrossUnitNonEquivalentValues_ReturnsFalse()
         {
-            bool result = QuantityMeasurementService.AreQuantitiesEqual(
-                1.0,
-                LengthUnit.FEET,
-                13.0,
-                LengthUnit.INCH
-            );
+            bool result = _service.AreQuantitiesEqual(1.0, LengthUnit.FEET, 13.0, LengthUnit.INCH);
             Assert.IsFalse(result);
         }
 
@@ -333,12 +313,7 @@ namespace QuantityMeasurementApp.Tests.Services
         [TestMethod]
         public void AreQuantitiesEqual_YardToFeetEquivalentValues_ReturnsTrue()
         {
-            bool result = QuantityMeasurementService.AreQuantitiesEqual(
-                1.0,
-                LengthUnit.YARD,
-                3.0,
-                LengthUnit.FEET
-            );
+            bool result = _service.AreQuantitiesEqual(1.0, LengthUnit.YARD, 3.0, LengthUnit.FEET);
             Assert.IsTrue(result);
         }
 
@@ -346,12 +321,7 @@ namespace QuantityMeasurementApp.Tests.Services
         [TestMethod]
         public void AreQuantitiesEqual_YardToInchesEquivalentValues_ReturnsTrue()
         {
-            bool result = QuantityMeasurementService.AreQuantitiesEqual(
-                1.0,
-                LengthUnit.YARD,
-                36.0,
-                LengthUnit.INCH
-            );
+            bool result = _service.AreQuantitiesEqual(1.0, LengthUnit.YARD, 36.0, LengthUnit.INCH);
             Assert.IsTrue(result);
         }
 
@@ -359,7 +329,7 @@ namespace QuantityMeasurementApp.Tests.Services
         [TestMethod]
         public void AreQuantitiesEqual_CentimeterToInchesEquivalentValues_ReturnsTrue()
         {
-            bool result = QuantityMeasurementService.AreQuantitiesEqual(
+            bool result = _service.AreQuantitiesEqual(
                 1.0,
                 LengthUnit.CENTIMETER,
                 0.393700787,
@@ -372,7 +342,7 @@ namespace QuantityMeasurementApp.Tests.Services
         [TestMethod]
         public void AreQuantitiesEqual_CentimeterToFeetEquivalentValues_ReturnsTrue()
         {
-            bool result = QuantityMeasurementService.AreQuantitiesEqual(
+            bool result = _service.AreQuantitiesEqual(
                 30.48,
                 LengthUnit.CENTIMETER,
                 1.0,
@@ -385,7 +355,7 @@ namespace QuantityMeasurementApp.Tests.Services
         [TestMethod]
         public void AreQuantitiesEqual_CentimeterToYardEquivalentValues_ReturnsTrue()
         {
-            bool result = QuantityMeasurementService.AreQuantitiesEqual(
+            bool result = _service.AreQuantitiesEqual(
                 91.44,
                 LengthUnit.CENTIMETER,
                 1.0,

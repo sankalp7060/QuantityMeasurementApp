@@ -11,11 +11,19 @@ namespace QuantityMeasurementApp.Tests.Models
     [TestClass]
     public class LengthUnitTests
     {
+        private UnitConverter _unitConverter = null!;
+
+        [TestInitialize]
+        public void Setup()
+        {
+            _unitConverter = new UnitConverter();
+        }
+
         // Tests LengthUnit.GetConversionFactorToFeet() for FEET
         [TestMethod]
         public void GetConversionFactorToFeet_FeetUnit_ReturnsOne()
         {
-            double factor = LengthUnit.FEET.GetConversionFactorToFeet();
+            double factor = _unitConverter.GetConversionFactorToFeet(LengthUnit.FEET);
             Assert.AreEqual(1.0, factor, 0.0001);
         }
 
@@ -23,7 +31,7 @@ namespace QuantityMeasurementApp.Tests.Models
         [TestMethod]
         public void GetConversionFactorToFeet_InchUnit_ReturnsOneTwelfth()
         {
-            double factor = LengthUnit.INCH.GetConversionFactorToFeet();
+            double factor = _unitConverter.GetConversionFactorToFeet(LengthUnit.INCH);
             Assert.AreEqual(1.0 / 12.0, factor, 0.0001);
         }
 
@@ -31,7 +39,7 @@ namespace QuantityMeasurementApp.Tests.Models
         [TestMethod]
         public void GetConversionFactorToFeet_YardUnit_ReturnsThree()
         {
-            double factor = LengthUnit.YARD.GetConversionFactorToFeet();
+            double factor = _unitConverter.GetConversionFactorToFeet(LengthUnit.YARD);
             Assert.AreEqual(3.0, factor, 0.0001);
         }
 
@@ -39,7 +47,7 @@ namespace QuantityMeasurementApp.Tests.Models
         [TestMethod]
         public void GetConversionFactorToFeet_CentimeterUnit_ReturnsCorrectValue()
         {
-            double factor = LengthUnit.CENTIMETER.GetConversionFactorToFeet();
+            double factor = _unitConverter.GetConversionFactorToFeet(LengthUnit.CENTIMETER);
             // 1 cm = 1/(2.54*12) feet = 1/30.48 feet = 0.0328083989501312 feet
             double expected = 0.0328083989501312;
             Assert.AreEqual(expected, factor, 0.0000001);
@@ -115,7 +123,7 @@ namespace QuantityMeasurementApp.Tests.Models
         {
             LengthUnit invalidUnit = (LengthUnit)99;
             Assert.ThrowsException<ArgumentException>(() =>
-                invalidUnit.GetConversionFactorToFeet()
+                _unitConverter.GetConversionFactorToFeet(invalidUnit)
             );
         }
     }

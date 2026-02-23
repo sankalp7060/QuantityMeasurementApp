@@ -12,6 +12,8 @@ namespace QuantityMeasurementApp.Models
         private readonly double _value;
         private readonly LengthUnit _unit;
 
+        private readonly UnitConverter _unitConverter;
+
         /// <summary>
         /// Initializes a new instance of the Quantity class.
         /// </summary>
@@ -21,6 +23,7 @@ namespace QuantityMeasurementApp.Models
         {
             _value = value;
             _unit = unit;
+            _unitConverter = new UnitConverter();
         }
 
         /// <summary>
@@ -43,8 +46,9 @@ namespace QuantityMeasurementApp.Models
         {
             ValidateUnit(targetUnit);
 
-            double valueInBaseUnit = _value * _unit.GetConversionFactorToFeet();
-            double convertedValue = valueInBaseUnit / targetUnit.GetConversionFactorToFeet();
+            double valueInBaseUnit = _value * _unitConverter.GetConversionFactorToFeet(_unit);
+            double convertedValue =
+                valueInBaseUnit / _unitConverter.GetConversionFactorToFeet(targetUnit);
 
             return new Quantity(convertedValue, targetUnit);
         }
@@ -87,7 +91,7 @@ namespace QuantityMeasurementApp.Models
             double thisInFeet = this.ConvertTo(LengthUnit.FEET).Value;
             double otherInFeet = other.ConvertTo(LengthUnit.FEET).Value;
 
-            return LengthUnitExtensions.AreApproximatelyEqual(thisInFeet, otherInFeet);
+            return _unitConverter.AreApproximatelyEqual(thisInFeet, otherInFeet);
         }
 
         /// <summary>
@@ -106,7 +110,7 @@ namespace QuantityMeasurementApp.Models
         /// <returns>A string in the format "{value} {unitSymbol}".</returns>
         public override string ToString()
         {
-            return $"{_value} {_unit.GetUnitSymbol()}";
+            return $"{_value} {LengthUnitExtensions.GetUnitSymbol(_unit)}";
         }
 
         /// <summary>

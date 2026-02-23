@@ -15,13 +15,13 @@ namespace QuantityMeasurementApp.Models
     }
 
     /// <summary>
-    /// Extension class to add conversion factor functionality to LengthUnit enum
+    /// Non-static class for unit conversion operations (instance-based)
     /// </summary>
-    public static class LengthUnitExtensions
+    public class UnitConverter
     {
         // Conversion factors to feet (base unit)
         // All units are converted to feet for consistent comparison
-        private static readonly double[] ToFeetConversionFactors = new double[]
+        private readonly double[] ToFeetConversionFactors = new double[]
         {
             1.0, // FEET to FEET conversion factor
             1.0 / 12.0, // INCH to FEET conversion factor (1 inch = 1/12 feet)
@@ -36,26 +36,35 @@ namespace QuantityMeasurementApp.Models
         public const double EPSILON = 0.000001;
 
         // Get the conversion factor to convert this unit to feet
-        public static double GetConversionFactorToFeet(this LengthUnit unit)
+        public double GetConversionFactorToFeet(LengthUnit unit)
         {
-            int index = (int)unit;
-            if (index >= 0 && index < ToFeetConversionFactors.Length)
+            switch (unit)
             {
-                return ToFeetConversionFactors[index];
+                case LengthUnit.FEET:
+                    return ToFeetConversionFactors[0]; // 1.0
+                case LengthUnit.INCH:
+                    return ToFeetConversionFactors[1]; // 1/12
+                case LengthUnit.YARD:
+                    return ToFeetConversionFactors[2]; // 3.0
+                case LengthUnit.CENTIMETER:
+                    return ToFeetConversionFactors[3]; // 1/(2.54*12)
+                default:
+                    throw new ArgumentException($"Invalid unit: {unit}");
             }
-            throw new ArgumentException($"Invalid unit: {unit}");
         }
 
         // Compare two double values with tolerance
-        public static bool AreApproximatelyEqual(
-            double value1,
-            double value2,
-            double epsilon = EPSILON
-        )
+        public bool AreApproximatelyEqual(double value1, double value2, double epsilon = EPSILON)
         {
             return Math.Abs(value1 - value2) < epsilon;
         }
+    }
 
+    /// <summary>
+    /// Static class for UI helper methods (can be shared across users)
+    /// </summary>
+    public static class LengthUnitExtensions
+    {
         // Get the string representation of the unit
         public static string GetUnitSymbol(this LengthUnit unit)
         {

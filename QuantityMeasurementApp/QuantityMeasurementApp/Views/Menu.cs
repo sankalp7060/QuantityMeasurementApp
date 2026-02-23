@@ -11,6 +11,7 @@ namespace QuantityMeasurementApp.Views
     public class Menu
     {
         private readonly QuantityMeasurementService _service;
+        private readonly UnitConverter _unitConverter;
 
         /// <summary>
         /// Initializes a new instance of the Menu class.
@@ -18,6 +19,7 @@ namespace QuantityMeasurementApp.Views
         public Menu()
         {
             _service = new QuantityMeasurementService();
+            _unitConverter = new UnitConverter();
         }
 
         /// <summary>
@@ -203,8 +205,8 @@ namespace QuantityMeasurementApp.Views
             double result
         )
         {
-            double sourceToFeet = source.GetConversionFactorToFeet();
-            double targetToFeet = target.GetConversionFactorToFeet();
+            double sourceToFeet = _unitConverter.GetConversionFactorToFeet(source);
+            double targetToFeet = _unitConverter.GetConversionFactorToFeet(target);
 
             Console.WriteLine($"\nConversion formula:");
             Console.WriteLine(
