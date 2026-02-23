@@ -11,10 +11,14 @@ namespace QuantityMeasurementApp.Views
         // Service instance to handle business logic
         private readonly QuantityMeasurementService _service;
 
-        // Constructor initializes the service
+        // Extension instance for unit operations
+        private readonly LengthUnitExtensions _unitExtensions;
+
+        // Constructor initializes the service and extensions
         public Menu()
         {
             _service = new QuantityMeasurementService();
+            _unitExtensions = new LengthUnitExtensions();
         }
 
         // Main menu display and handling
@@ -49,43 +53,43 @@ namespace QuantityMeasurementApp.Views
         {
             Console.WriteLine("--- Static Method Examples (All Units) ---");
             Console.WriteLine(
-                $"Feet to Feet: 1.0 ft vs 1.0 ft -> Equal? {QuantityMeasurementService.AreQuantitiesEqual(1.0, LengthUnit.FEET, 1.0, LengthUnit.FEET)}"
+                $"Feet to Feet: 1.0 ft vs 1.0 ft -> Equal? {_service.AreQuantitiesEqual(1.0, LengthUnit.FEET, 1.0, LengthUnit.FEET)}"
             );
             Console.WriteLine(
-                $"Inch to Inch: 1.0 in vs 1.0 in -> Equal? {QuantityMeasurementService.AreQuantitiesEqual(1.0, LengthUnit.INCH, 1.0, LengthUnit.INCH)}"
+                $"Inch to Inch: 1.0 in vs 1.0 in -> Equal? {_service.AreQuantitiesEqual(1.0, LengthUnit.INCH, 1.0, LengthUnit.INCH)}"
             );
             Console.WriteLine(
-                $"Yard to Yard: 1.0 yd vs 1.0 yd -> Equal? {QuantityMeasurementService.AreQuantitiesEqual(1.0, LengthUnit.YARD, 1.0, LengthUnit.YARD)}"
+                $"Yard to Yard: 1.0 yd vs 1.0 yd -> Equal? {_service.AreQuantitiesEqual(1.0, LengthUnit.YARD, 1.0, LengthUnit.YARD)}"
             );
             Console.WriteLine(
-                $"CM to CM: 1.0 cm vs 1.0 cm -> Equal? {QuantityMeasurementService.AreQuantitiesEqual(1.0, LengthUnit.CENTIMETER, 1.0, LengthUnit.CENTIMETER)}"
+                $"CM to CM: 1.0 cm vs 1.0 cm -> Equal? {_service.AreQuantitiesEqual(1.0, LengthUnit.CENTIMETER, 1.0, LengthUnit.CENTIMETER)}"
             );
             Console.WriteLine();
 
             Console.WriteLine("--- Cross-Unit Examples ---");
             Console.WriteLine(
-                $"Yard to Feet: 1.0 yd vs 3.0 ft -> Equal? {QuantityMeasurementService.AreQuantitiesEqual(1.0, LengthUnit.YARD, 3.0, LengthUnit.FEET)}"
+                $"Yard to Feet: 1.0 yd vs 3.0 ft -> Equal? {_service.AreQuantitiesEqual(1.0, LengthUnit.YARD, 3.0, LengthUnit.FEET)}"
             );
             Console.WriteLine(
-                $"Yard to Inches: 1.0 yd vs 36.0 in -> Equal? {QuantityMeasurementService.AreQuantitiesEqual(1.0, LengthUnit.YARD, 36.0, LengthUnit.INCH)}"
+                $"Yard to Inches: 1.0 yd vs 36.0 in -> Equal? {_service.AreQuantitiesEqual(1.0, LengthUnit.YARD, 36.0, LengthUnit.INCH)}"
             );
             Console.WriteLine(
-                $"CM to Inches: 1.0 cm vs 0.393701 in -> Equal? {QuantityMeasurementService.AreQuantitiesEqual(1.0, LengthUnit.CENTIMETER, 0.393701, LengthUnit.INCH)}"
+                $"CM to Inches: 1.0 cm vs 0.393701 in -> Equal? {_service.AreQuantitiesEqual(1.0, LengthUnit.CENTIMETER, 0.393701, LengthUnit.INCH)}"
             );
             Console.WriteLine(
-                $"CM to Feet: 30.48 cm vs 1.0 ft -> Equal? {QuantityMeasurementService.AreQuantitiesEqual(30.48, LengthUnit.CENTIMETER, 1.0, LengthUnit.FEET)}"
+                $"CM to Feet: 30.48 cm vs 1.0 ft -> Equal? {_service.AreQuantitiesEqual(30.48, LengthUnit.CENTIMETER, 1.0, LengthUnit.FEET)}"
             );
             Console.WriteLine(
-                $"Yard to CM: 1.0 yd vs 91.44 cm -> Equal? {QuantityMeasurementService.AreQuantitiesEqual(1.0, LengthUnit.YARD, 91.44, LengthUnit.CENTIMETER)}"
+                $"Yard to CM: 1.0 yd vs 91.44 cm -> Equal? {_service.AreQuantitiesEqual(1.0, LengthUnit.YARD, 91.44, LengthUnit.CENTIMETER)}"
             );
             Console.WriteLine();
 
             Console.WriteLine("--- Complex Examples ---");
             Console.WriteLine(
-                $"2 Yards to 6 Feet to 72 Inches: {QuantityMeasurementService.AreQuantitiesEqual(2.0, LengthUnit.YARD, 6.0, LengthUnit.FEET)} and {QuantityMeasurementService.AreQuantitiesEqual(6.0, LengthUnit.FEET, 72.0, LengthUnit.INCH)}"
+                $"2 Yards to 6 Feet to 72 Inches: {_service.AreQuantitiesEqual(2.0, LengthUnit.YARD, 6.0, LengthUnit.FEET)} and {_service.AreQuantitiesEqual(6.0, LengthUnit.FEET, 72.0, LengthUnit.INCH)}"
             );
             Console.WriteLine(
-                $"Therefore, 2 Yards equals 72 Inches: {QuantityMeasurementService.AreQuantitiesEqual(2.0, LengthUnit.YARD, 72.0, LengthUnit.INCH)}\n"
+                $"Therefore, 2 Yards equals 72 Inches: {_service.AreQuantitiesEqual(2.0, LengthUnit.YARD, 72.0, LengthUnit.INCH)}\n"
             );
         }
 
@@ -145,7 +149,7 @@ namespace QuantityMeasurementApp.Views
                 return;
             }
 
-            string unitName = selectedUnit.GetUnitName();
+            string unitName = LengthUnitExtensions.GetUnitName(selectedUnit);
 
             // Get first measurement
             Console.WriteLine($"\nEnter first measurement in {unitName}:");
@@ -209,11 +213,11 @@ namespace QuantityMeasurementApp.Views
             }
 
             // Get first measurement
-            Console.WriteLine($"\nEnter measurement in {unit1.GetUnitName()}:");
+            Console.WriteLine($"\nEnter measurement in {LengthUnitExtensions.GetUnitName(unit1)}:");
             string? input1 = Console.ReadLine();
 
             // Get second measurement
-            Console.WriteLine($"Enter measurement in {unit2.GetUnitName()}:");
+            Console.WriteLine($"Enter measurement in {LengthUnitExtensions.GetUnitName(unit2)}:");
             string? input2 = Console.ReadLine();
 
             // Parse inputs
@@ -243,19 +247,19 @@ namespace QuantityMeasurementApp.Views
 
             // Example 1: Yards to Feet to Inches
             Console.WriteLine("Example 1: 2 Yards = 6 Feet = 72 Inches");
-            bool yardToFeet = QuantityMeasurementService.AreQuantitiesEqual(
+            bool yardToFeet = _service.AreQuantitiesEqual(
                 2.0,
                 LengthUnit.YARD,
                 6.0,
                 LengthUnit.FEET
             );
-            bool feetToInches = QuantityMeasurementService.AreQuantitiesEqual(
+            bool feetToInches = _service.AreQuantitiesEqual(
                 6.0,
                 LengthUnit.FEET,
                 72.0,
                 LengthUnit.INCH
             );
-            bool yardToInches = QuantityMeasurementService.AreQuantitiesEqual(
+            bool yardToInches = _service.AreQuantitiesEqual(
                 2.0,
                 LengthUnit.YARD,
                 72.0,
@@ -268,19 +272,19 @@ namespace QuantityMeasurementApp.Views
 
             // Example 2: Centimeters to Inches to Feet
             Console.WriteLine("Example 2: 30.48 cm = 12 inches = 1 foot");
-            bool cmToInches = QuantityMeasurementService.AreQuantitiesEqual(
+            bool cmToInches = _service.AreQuantitiesEqual(
                 30.48,
                 LengthUnit.CENTIMETER,
                 12.0,
                 LengthUnit.INCH
             );
-            bool inchesToFeet = QuantityMeasurementService.AreQuantitiesEqual(
+            bool inchesToFeet = _service.AreQuantitiesEqual(
                 12.0,
                 LengthUnit.INCH,
                 1.0,
                 LengthUnit.FEET
             );
-            bool cmToFeet = QuantityMeasurementService.AreQuantitiesEqual(
+            bool cmToFeet = _service.AreQuantitiesEqual(
                 30.48,
                 LengthUnit.CENTIMETER,
                 1.0,
@@ -293,7 +297,7 @@ namespace QuantityMeasurementApp.Views
 
             // Example 3: Yards to Centimeters
             Console.WriteLine("Example 3: 1 Yard = 91.44 Centimeters");
-            bool yardToCm = QuantityMeasurementService.AreQuantitiesEqual(
+            bool yardToCm = _service.AreQuantitiesEqual(
                 1.0,
                 LengthUnit.YARD,
                 91.44,
@@ -313,7 +317,7 @@ namespace QuantityMeasurementApp.Views
                 && double.TryParse(cmInput, out double cm)
             )
             {
-                bool result = QuantityMeasurementService.AreQuantitiesEqual(
+                bool result = _service.AreQuantitiesEqual(
                     yards,
                     LengthUnit.YARD,
                     cm,
@@ -347,8 +351,8 @@ namespace QuantityMeasurementApp.Views
         // Helper method to show conversion explanation
         private void ShowConversionExplanation(Quantity q1, Quantity q2, bool areEqual)
         {
-            double q1InFeet = q1.Value * q1.Unit.GetConversionFactorToFeet();
-            double q2InFeet = q2.Value * q2.Unit.GetConversionFactorToFeet();
+            double q1InFeet = q1.Value * _unitExtensions.GetConversionFactorToFeet(q1.Unit);
+            double q2InFeet = q2.Value * _unitExtensions.GetConversionFactorToFeet(q2.Unit);
 
             Console.WriteLine("\n--- Conversion Details ---");
             Console.WriteLine($"{q1} = {q1InFeet:F6} feet");

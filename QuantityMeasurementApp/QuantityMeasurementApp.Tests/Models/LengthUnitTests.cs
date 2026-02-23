@@ -11,111 +11,119 @@ namespace QuantityMeasurementApp.Tests.Models
     [TestClass]
     public class LengthUnitTests
     {
-        // Tests LengthUnit.GetConversionFactorToFeet() for FEET
+        private LengthUnitExtensions _unitExtensions = null!;
+
+        [TestInitialize]
+        public void Setup()
+        {
+            _unitExtensions = new LengthUnitExtensions();
+        }
+
+        // Tests LengthUnitExtensions.GetConversionFactorToFeet() for FEET
         [TestMethod]
         public void GetConversionFactorToFeet_FeetUnit_ReturnsOne()
         {
-            double factor = LengthUnit.FEET.GetConversionFactorToFeet();
+            double factor = _unitExtensions.GetConversionFactorToFeet(LengthUnit.FEET);
             Assert.AreEqual(1.0, factor, 0.0001);
         }
 
-        // Tests LengthUnit.GetConversionFactorToFeet() for INCH
+        // Tests LengthUnitExtensions.GetConversionFactorToFeet() for INCH
         [TestMethod]
         public void GetConversionFactorToFeet_InchUnit_ReturnsOneTwelfth()
         {
-            double factor = LengthUnit.INCH.GetConversionFactorToFeet();
+            double factor = _unitExtensions.GetConversionFactorToFeet(LengthUnit.INCH);
             Assert.AreEqual(1.0 / 12.0, factor, 0.0001);
         }
 
-        // Tests LengthUnit.GetConversionFactorToFeet() for YARD
+        // Tests LengthUnitExtensions.GetConversionFactorToFeet() for YARD
         [TestMethod]
         public void GetConversionFactorToFeet_YardUnit_ReturnsThree()
         {
-            double factor = LengthUnit.YARD.GetConversionFactorToFeet();
+            double factor = _unitExtensions.GetConversionFactorToFeet(LengthUnit.YARD);
             Assert.AreEqual(3.0, factor, 0.0001);
         }
 
-        // Tests LengthUnit.GetConversionFactorToFeet() for CENTIMETER
+        // Tests LengthUnitExtensions.GetConversionFactorToFeet() for CENTIMETER
         [TestMethod]
         public void GetConversionFactorToFeet_CentimeterUnit_ReturnsCorrectValue()
         {
-            double factor = LengthUnit.CENTIMETER.GetConversionFactorToFeet();
+            double factor = _unitExtensions.GetConversionFactorToFeet(LengthUnit.CENTIMETER);
             // 1 cm = 1/(2.54*12) feet = 1/30.48 feet = 0.0328083989501312 feet
             double expected = 0.0328083989501312;
             Assert.AreEqual(expected, factor, 0.0000001);
         }
 
-        // Tests LengthUnit.GetUnitSymbol() for FEET
+        // Tests LengthUnitExtensions.GetUnitSymbol() for FEET (static UI method)
         [TestMethod]
         public void GetUnitSymbol_FeetUnit_ReturnsFt()
         {
-            string symbol = LengthUnit.FEET.GetUnitSymbol();
+            string symbol = LengthUnitExtensions.GetUnitSymbol(LengthUnit.FEET);
             Assert.AreEqual("ft", symbol);
         }
 
-        // Tests LengthUnit.GetUnitSymbol() for INCH
+        // Tests LengthUnitExtensions.GetUnitSymbol() for INCH (static UI method)
         [TestMethod]
         public void GetUnitSymbol_InchUnit_ReturnsIn()
         {
-            string symbol = LengthUnit.INCH.GetUnitSymbol();
+            string symbol = LengthUnitExtensions.GetUnitSymbol(LengthUnit.INCH);
             Assert.AreEqual("in", symbol);
         }
 
-        // Tests LengthUnit.GetUnitSymbol() for YARD
+        // Tests LengthUnitExtensions.GetUnitSymbol() for YARD (static UI method)
         [TestMethod]
         public void GetUnitSymbol_YardUnit_ReturnsYd()
         {
-            string symbol = LengthUnit.YARD.GetUnitSymbol();
+            string symbol = LengthUnitExtensions.GetUnitSymbol(LengthUnit.YARD);
             Assert.AreEqual("yd", symbol);
         }
 
-        // Tests LengthUnit.GetUnitSymbol() for CENTIMETER
+        // Tests LengthUnitExtensions.GetUnitSymbol() for CENTIMETER (static UI method)
         [TestMethod]
         public void GetUnitSymbol_CentimeterUnit_ReturnsCm()
         {
-            string symbol = LengthUnit.CENTIMETER.GetUnitSymbol();
+            string symbol = LengthUnitExtensions.GetUnitSymbol(LengthUnit.CENTIMETER);
             Assert.AreEqual("cm", symbol);
         }
 
-        // Tests LengthUnit.GetUnitName() for FEET
+        // Tests LengthUnitExtensions.GetUnitName() for FEET (static UI method)
         [TestMethod]
         public void GetUnitName_FeetUnit_ReturnsFeet()
         {
-            string name = LengthUnit.FEET.GetUnitName();
+            string name = LengthUnitExtensions.GetUnitName(LengthUnit.FEET);
             Assert.AreEqual("feet", name);
         }
 
-        // Tests LengthUnit.GetUnitName() for INCH
+        // Tests LengthUnitExtensions.GetUnitName() for INCH (static UI method)
         [TestMethod]
         public void GetUnitName_InchUnit_ReturnsInches()
         {
-            string name = LengthUnit.INCH.GetUnitName();
+            string name = LengthUnitExtensions.GetUnitName(LengthUnit.INCH);
             Assert.AreEqual("inches", name);
         }
 
-        // Tests LengthUnit.GetUnitName() for YARD
+        // Tests LengthUnitExtensions.GetUnitName() for YARD (static UI method)
         [TestMethod]
         public void GetUnitName_YardUnit_ReturnsYards()
         {
-            string name = LengthUnit.YARD.GetUnitName();
+            string name = LengthUnitExtensions.GetUnitName(LengthUnit.YARD);
             Assert.AreEqual("yards", name);
         }
 
-        // Tests LengthUnit.GetUnitName() for CENTIMETER
+        // Tests LengthUnitExtensions.GetUnitName() for CENTIMETER (static UI method)
         [TestMethod]
         public void GetUnitName_CentimeterUnit_ReturnsCentimeters()
         {
-            string name = LengthUnit.CENTIMETER.GetUnitName();
+            string name = LengthUnitExtensions.GetUnitName(LengthUnit.CENTIMETER);
             Assert.AreEqual("centimeters", name);
         }
 
-        // Tests LengthUnit.GetConversionFactorToFeet() for invalid enum value
+        // Tests LengthUnitExtensions.GetConversionFactorToFeet() for invalid enum value
         [TestMethod]
         public void GetConversionFactorToFeet_InvalidUnit_ThrowsException()
         {
             LengthUnit invalidUnit = (LengthUnit)99;
             Assert.ThrowsException<ArgumentException>(() =>
-                invalidUnit.GetConversionFactorToFeet()
+                _unitExtensions.GetConversionFactorToFeet(invalidUnit)
             );
         }
     }

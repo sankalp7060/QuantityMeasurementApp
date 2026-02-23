@@ -4,7 +4,7 @@ namespace QuantityMeasurementApp.Services
 {
     /// <summary>
     /// Service class for quantity measurement operations
-    /// Updated to use the generic Quantity class instead of separate Feet and Inch classes
+    /// Updated to use non-static methods for service operations
     /// </summary>
     public class QuantityMeasurementService
     {
@@ -43,13 +43,13 @@ namespace QuantityMeasurementApp.Services
             return null;
         }
 
-        // Static method for quantity equality check - reduces dependency on main method
+        // Non-static method for quantity equality check - each user gets their own instance
         // Parameter: value1 - First value
         // Parameter: unit1 - Unit of first value
         // Parameter: value2 - Second value
         // Parameter: unit2 - Unit of second value
         // Returns: True if both quantities are equal
-        public static bool AreQuantitiesEqual(
+        public bool AreQuantitiesEqual(
             double value1,
             LengthUnit unit1,
             double value2,

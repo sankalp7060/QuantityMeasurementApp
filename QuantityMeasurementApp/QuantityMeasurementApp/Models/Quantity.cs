@@ -12,6 +12,9 @@ namespace QuantityMeasurementApp.Models
         private readonly double _value;
         private readonly LengthUnit _unit;
 
+        // Create an instance of LengthUnitExtensions for non-static methods
+        private readonly LengthUnitExtensions _unitExtensions;
+
         // Constructor to initialize a new Quantity object with a value and unit
         // Parameter: value - The measurement value
         // Parameter: unit - The unit of measurement (from LengthUnit enum)
@@ -19,6 +22,7 @@ namespace QuantityMeasurementApp.Models
         {
             _value = value;
             _unit = unit;
+            _unitExtensions = new LengthUnitExtensions();
         }
 
         // Public property to access the measurement value
@@ -31,7 +35,7 @@ namespace QuantityMeasurementApp.Models
         // Returns: The value converted to feet
         private double ConvertToFeet()
         {
-            return _value * _unit.GetConversionFactorToFeet();
+            return _value * _unitExtensions.GetConversionFactorToFeet(_unit);
         }
 
         // Determines whether the specified object is equal to the current Quantity object
@@ -60,7 +64,7 @@ namespace QuantityMeasurementApp.Models
             double otherInFeet = other.ConvertToFeet();
 
             // Compare the converted values with tolerance for floating point precision
-            return LengthUnitExtensions.AreApproximatelyEqual(thisInFeet, otherInFeet);
+            return _unitExtensions.AreApproximatelyEqual(thisInFeet, otherInFeet);
         }
 
         // Serves as the default hash function
@@ -77,7 +81,7 @@ namespace QuantityMeasurementApp.Models
         // Format: "{value} {unitSymbol}" (e.g., "1.5 ft" or "12 in")
         public override string ToString()
         {
-            return $"{_value} {_unit.GetUnitSymbol()}";
+            return $"{_value} {LengthUnitExtensions.GetUnitSymbol(_unit)}";
         }
     }
 }

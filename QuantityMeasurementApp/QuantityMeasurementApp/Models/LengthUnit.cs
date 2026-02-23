@@ -15,13 +15,14 @@ namespace QuantityMeasurementApp.Models
     }
 
     /// <summary>
-    /// Extension class to add conversion factor functionality to LengthUnit enum
+    /// Class to add conversion factor functionality to LengthUnit enum
+    /// Now non-static to ensure proper instance-based access
     /// </summary>
-    public static class LengthUnitExtensions
+    public class LengthUnitExtensions
     {
         // Conversion factors to feet (base unit)
         // All units are converted to feet for consistent comparison
-        private static readonly double[] ToFeetConversionFactors = new double[]
+        private readonly double[] ToFeetConversionFactors = new double[]
         {
             1.0, // FEET to FEET conversion factor
             1.0 / 12.0, // INCH to FEET conversion factor (1 inch = 1/12 feet)
@@ -36,7 +37,7 @@ namespace QuantityMeasurementApp.Models
         public const double EPSILON = 0.000001;
 
         // Get the conversion factor to convert this unit to feet
-        public static double GetConversionFactorToFeet(this LengthUnit unit)
+        public double GetConversionFactorToFeet(LengthUnit unit)
         {
             int index = (int)unit;
             if (index >= 0 && index < ToFeetConversionFactors.Length)
@@ -47,17 +48,14 @@ namespace QuantityMeasurementApp.Models
         }
 
         // Compare two double values with tolerance
-        public static bool AreApproximatelyEqual(
-            double value1,
-            double value2,
-            double epsilon = EPSILON
-        )
+        public bool AreApproximatelyEqual(double value1, double value2, double epsilon = EPSILON)
         {
             return Math.Abs(value1 - value2) < epsilon;
         }
 
         // Get the string representation of the unit
-        public static string GetUnitSymbol(this LengthUnit unit)
+        // This is UI-related and can be static
+        public static string GetUnitSymbol(LengthUnit unit)
         {
             switch (unit)
             {
@@ -75,7 +73,8 @@ namespace QuantityMeasurementApp.Models
         }
 
         // Get the full name of the unit
-        public static string GetUnitName(this LengthUnit unit)
+        // This is UI-related and can be static
+        public static string GetUnitName(LengthUnit unit)
         {
             switch (unit)
             {
