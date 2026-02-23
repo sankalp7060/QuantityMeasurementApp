@@ -49,7 +49,7 @@ namespace QuantityMeasurementApp.Services
         // Parameter: value2 - Second value
         // Parameter: unit2 - Unit of second value
         // Returns: True if both quantities are equal
-        public static bool AreQuantitiesEqual(
+        public bool AreQuantitiesEqual(
             double value1,
             LengthUnit unit1,
             double value2,
