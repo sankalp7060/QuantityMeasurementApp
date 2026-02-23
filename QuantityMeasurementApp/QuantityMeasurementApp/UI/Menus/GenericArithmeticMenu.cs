@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using QuantityMeasurementApp.Domain.Quantities;
 using QuantityMeasurementApp.Domain.Units;
 using QuantityMeasurementApp.Services;
@@ -82,10 +84,13 @@ namespace QuantityMeasurementApp.UI.Menus
             string[] menuOptions = new[]
             {
                 "1.  Addition",
+                "    (a + b = c)",
                 "",
                 "2.  Subtraction",
+                "    (a - b = c)",
                 "",
                 "3.  Division",
+                "    (a ÷ b = ratio)",
                 "",
                 "4.  All Operations Demo",
                 "    (Try all operations with one pair)",
@@ -106,10 +111,13 @@ namespace QuantityMeasurementApp.UI.Menus
                 string[] additionOptions = new[]
                 {
                     "1.  Result in FIRST unit",
+                    "    (e.g., 5 ft + 3 ft = 8 ft)",
                     "",
                     "2.  Result in SECOND unit",
+                    "    (e.g., 5 ft + 3 ft = 8 ft)",
                     "",
                     "3.  Results in BOTH units",
+                    "    (Compare both results)",
                     "",
                     "4.  Back to Arithmetic Menu",
                 };
@@ -144,19 +152,23 @@ namespace QuantityMeasurementApp.UI.Menus
             while (true)
             {
                 ConsoleHelper.ClearScreen();
-                ConsoleHelper.DisplayAttributedHeader("SUBTRACTION", "a - b = c");
 
                 string[] subtractionOptions = new[]
                 {
                     "1.  Result in FIRST unit",
+                    "    (e.g., 10 ft - 4 ft = 6 ft)",
                     "",
                     "2.  Result in SECOND unit",
+                    "    (e.g., 10 ft - 4 ft = 6 ft)",
                     "",
                     "3.  Results in BOTH units",
+                    "    (Compare both results)",
                     "",
                     "4.  Back to Arithmetic Menu",
                 };
 
+                // Display header and menu together
+                ConsoleHelper.DisplayAttributedHeader("SUBTRACTION", "a - b = c");
                 ConsoleHelper.DisplayMenu(subtractionOptions);
 
                 string? userChoice = ConsoleHelper.GetInput("Enter your choice");
@@ -187,21 +199,26 @@ namespace QuantityMeasurementApp.UI.Menus
             while (true)
             {
                 ConsoleHelper.ClearScreen();
-                ConsoleHelper.DisplayAttributedHeader("DIVISION", "a ÷ b = ratio");
 
                 string[] divisionOptions = new[]
                 {
                     "1.  Show ratio only",
+                    "    (e.g., 10 ft ÷ 2 ft = 5.0)",
                     "",
                     "2.  Show in FIRST unit context",
+                    "    (With conversion details)",
                     "",
                     "3.  Show in SECOND unit context",
+                    "    (With conversion details)",
                     "",
                     "4.  Show in BOTH units",
+                    "    (Compare interpretations)",
                     "",
                     "5.  Back to Arithmetic Menu",
                 };
 
+                // Display header and menu together
+                ConsoleHelper.DisplayAttributedHeader("DIVISION", "a ÷ b = ratio");
                 ConsoleHelper.DisplayMenu(divisionOptions);
 
                 string? userChoice = ConsoleHelper.GetInput("Enter your choice");
@@ -230,118 +247,6 @@ namespace QuantityMeasurementApp.UI.Menus
             }
         }
 
-        private enum DivisionMode
-        {
-            RatioOnly,
-            FirstUnit,
-            SecondUnit,
-            BothUnits,
-        }
-
-        private void PerformDivision(DivisionMode mode)
-        {
-            ConsoleHelper.ClearScreen();
-            string modeText = mode switch
-            {
-                DivisionMode.RatioOnly => "RATIO ONLY",
-                DivisionMode.FirstUnit => "FIRST UNIT CONTEXT",
-                DivisionMode.SecondUnit => "SECOND UNIT CONTEXT",
-                DivisionMode.BothUnits => "BOTH UNITS",
-                _ => "DIVISION",
-            };
-            ConsoleHelper.DisplayAttributedHeader($"DIVISION - {modeText}", "a ÷ b = ratio");
-
-            try
-            {
-                // First quantity
-                ConsoleHelper.DisplaySubHeader("FIRST QUANTITY (Dividend)");
-                object firstUnit = _unitSelector("Select unit for first quantity");
-                Console.Write("Enter value: ");
-                string? firstInput = Console.ReadLine();
-
-                // Second quantity
-                ConsoleHelper.DisplaySubHeader("SECOND QUANTITY (Divisor)");
-                object secondUnit = _unitSelector("Select unit for second quantity");
-                Console.Write("Enter value: ");
-                string? secondInput = Console.ReadLine();
-
-                if (
-                    double.TryParse(firstInput, out double firstValue)
-                    && double.TryParse(secondInput, out double secondValue)
-                )
-                {
-                    dynamic firstQuantity = CreateQuantity(firstValue, firstUnit);
-                    dynamic secondQuantity = CreateQuantity(secondValue, secondUnit);
-
-                    double ratio = firstQuantity.Divide(secondQuantity);
-
-                    List<string> resultLines = new List<string>();
-
-                    if (mode == DivisionMode.RatioOnly || mode == DivisionMode.BothUnits)
-                    {
-                        resultLines.Add($"{firstQuantity} ÷ {secondQuantity} = {ratio:F6}");
-                        resultLines.Add("");
-                        resultLines.Add(GetRatioInterpretation(ratio));
-                    }
-
-                    if (mode == DivisionMode.FirstUnit || mode == DivisionMode.BothUnits)
-                    {
-                        dynamic secondInFirstUnit = secondQuantity.ConvertTo(firstUnit);
-                        resultLines.Add("");
-                        resultLines.Add($"In {GetUnitName(firstUnit)} terms:");
-                        resultLines.Add($"  {firstQuantity} ÷ {secondInFirstUnit} = {ratio:F6}");
-                        resultLines.Add(
-                            $"  Meaning: {firstValue} {GetUnitSymbol(firstUnit)} is {ratio:F2} times"
-                        );
-                        resultLines.Add(
-                            $"           {secondInFirstUnit.Value:F2} {GetUnitSymbol(firstUnit)}"
-                        );
-                    }
-
-                    if (mode == DivisionMode.SecondUnit || mode == DivisionMode.BothUnits)
-                    {
-                        dynamic firstInSecondUnit = firstQuantity.ConvertTo(secondUnit);
-                        resultLines.Add("");
-                        resultLines.Add($"In {GetUnitName(secondUnit)} terms:");
-                        resultLines.Add($"  {firstInSecondUnit} ÷ {secondQuantity} = {ratio:F6}");
-                        resultLines.Add(
-                            $"  Meaning: {firstInSecondUnit.Value:F2} {GetUnitSymbol(secondUnit)} is {ratio:F2} times"
-                        );
-                        resultLines.Add($"           {secondValue} {GetUnitSymbol(secondUnit)}");
-                    }
-
-                    ConsoleHelper.DisplayResultBox("DIVISION RESULT", resultLines.ToArray());
-
-                    // Show in base unit for reference
-                    dynamic baseUnit = GetBaseUnit(firstUnit.GetType());
-                    dynamic firstInBase = firstQuantity.ConvertTo(baseUnit);
-                    dynamic secondInBase = secondQuantity.ConvertTo(baseUnit);
-
-                    ConsoleHelper.DisplayInfoBox(
-                        new[]
-                        {
-                            "In base units:",
-                            $"  {firstInBase.Value:F6} {GetUnitSymbol(baseUnit)} ÷ {secondInBase.Value:F6} {GetUnitSymbol(baseUnit)} = {ratio:F6}",
-                        }
-                    );
-                }
-                else
-                {
-                    ConsoleHelper.DisplayError("Invalid numeric values!");
-                }
-            }
-            catch (DivideByZeroException)
-            {
-                ConsoleHelper.DisplayError("Division by zero is not allowed!");
-            }
-            catch (Exception ex)
-            {
-                ConsoleHelper.DisplayError($"Error: {ex.Message}");
-            }
-
-            ConsoleHelper.WaitForKeyPress();
-        }
-
         private void DisplayAllOperationsDemo()
         {
             ConsoleHelper.ClearScreen();
@@ -352,6 +257,7 @@ namespace QuantityMeasurementApp.UI.Menus
 
             try
             {
+                // FIRST: Get inputs
                 // First quantity
                 ConsoleHelper.DisplaySubHeader("FIRST QUANTITY");
                 object firstUnit = _unitSelector("Select unit for first quantity");
@@ -364,29 +270,53 @@ namespace QuantityMeasurementApp.UI.Menus
                 Console.Write("Enter value: ");
                 string? secondInput = Console.ReadLine();
 
-                // Ask user which unit they want results in
-                ConsoleHelper.DisplaySubHeader("RESULT UNIT OPTIONS");
-                Console.WriteLine("\nResults can be displayed in:");
-                Console.WriteLine("  1. First unit only");
-                Console.WriteLine("  2. Second unit only");
-                Console.WriteLine("  3. Both units (for comparison)");
+                if (
+                    !double.TryParse(firstInput, out double firstValue)
+                    || !double.TryParse(secondInput, out double secondValue)
+                )
+                {
+                    ConsoleHelper.DisplayError("Invalid numeric values!");
+                    ConsoleHelper.WaitForKeyPress();
+                    return;
+                }
+
+                // SECOND: Now ask how they want results displayed
+                ConsoleHelper.DisplaySubHeader("RESULT DISPLAY OPTIONS");
+                Console.WriteLine("\nHow would you like to see the results?");
+                Console.WriteLine("  1. Show results in first unit only");
+                Console.WriteLine("  2. Show results in second unit only");
+                Console.WriteLine("  3. Show results in both units (for comparison)");
 
                 string? resultChoice = ConsoleHelper.GetInput("Enter your choice (1-3)");
 
-                if (
-                    double.TryParse(firstInput, out double firstValue)
-                    && double.TryParse(secondInput, out double secondValue)
-                )
+                // Process based on unit type
+                Type firstUnitType = firstUnit.GetType();
+                Type secondUnitType = secondUnit.GetType();
+
+                if (firstUnitType != secondUnitType)
                 {
-                    dynamic firstQuantity = CreateQuantity(firstValue, firstUnit);
-                    dynamic secondQuantity = CreateQuantity(secondValue, secondUnit);
+                    ConsoleHelper.DisplayError("Units must be of the same measurement category!");
+                    ConsoleHelper.WaitForKeyPress();
+                    return;
+                }
 
-                    // Convert second to first unit for display
-                    dynamic secondInFirstUnit = secondQuantity.ConvertTo(firstUnit);
-                    // Convert first to second unit for display
-                    dynamic firstInSecondUnit = firstQuantity.ConvertTo(secondUnit);
+                List<string> resultLines = new List<string>();
 
-                    List<string> resultLines = new List<string>();
+                if (firstUnitType == typeof(LengthUnit))
+                {
+                    // Length operations
+                    var firstQuantity = new GenericQuantity<LengthUnit>(
+                        firstValue,
+                        (LengthUnit)firstUnit
+                    );
+                    var secondQuantity = new GenericQuantity<LengthUnit>(
+                        secondValue,
+                        (LengthUnit)secondUnit
+                    );
+
+                    var secondInFirstUnit = secondQuantity.ConvertTo((LengthUnit)firstUnit);
+                    var firstInSecondUnit = firstQuantity.ConvertTo((LengthUnit)secondUnit);
+
                     resultLines.Add($"{firstQuantity} and {secondQuantity}");
                     resultLines.Add($"  = {firstQuantity} and {secondInFirstUnit} (in first unit)");
                     resultLines.Add(
@@ -397,58 +327,236 @@ namespace QuantityMeasurementApp.UI.Menus
                     // Perform operations
                     if (resultChoice == "1" || resultChoice == "3")
                     {
-                        dynamic sumInFirst = firstQuantity.Add(secondQuantity, firstUnit);
-                        dynamic diffInFirst = firstQuantity.Subtract(secondQuantity, firstUnit);
+                        var sumInFirst = firstQuantity.Add(secondQuantity, (LengthUnit)firstUnit);
+                        var diffInFirst = firstQuantity.Subtract(
+                            secondQuantity,
+                            (LengthUnit)firstUnit
+                        );
                         double ratio = firstQuantity.Divide(secondQuantity);
 
-                        resultLines.Add($"In FIRST unit ({GetUnitSymbol(firstUnit)}):");
                         resultLines.Add(
-                            $"  Addition:    {firstQuantity} + {secondQuantity} = {sumInFirst.Value:F6} {GetUnitSymbol(firstUnit)}"
+                            $"In FIRST unit ({((LengthUnit)firstUnit).GetSymbol()} - {((LengthUnit)firstUnit).GetName()}):"
                         );
                         resultLines.Add(
-                            $"  Subtraction: {firstQuantity} - {secondQuantity} = {diffInFirst.Value:F6} {GetUnitSymbol(firstUnit)}"
+                            $"  Addition:    {firstQuantity} + {secondQuantity} = {sumInFirst.Value:F2} {((LengthUnit)firstUnit).GetSymbol()}"
                         );
                         resultLines.Add(
-                            $"  Division:    {firstQuantity} ÷ {secondQuantity} = {ratio:F6} (dimensionless)"
+                            $"  Subtraction: {firstQuantity} - {secondQuantity} = {diffInFirst.Value:F2} {((LengthUnit)firstUnit).GetSymbol()}"
+                        );
+                        resultLines.Add(
+                            $"  Division:    {firstQuantity} ÷ {secondQuantity} = {ratio:F4} (dimensionless)"
                         );
                         resultLines.Add("");
                     }
 
                     if (resultChoice == "2" || resultChoice == "3")
                     {
-                        dynamic sumInSecond = firstQuantity.Add(secondQuantity, secondUnit);
-                        dynamic diffInSecond = firstQuantity.Subtract(secondQuantity, secondUnit);
+                        var sumInSecond = firstQuantity.Add(secondQuantity, (LengthUnit)secondUnit);
+                        var diffInSecond = firstQuantity.Subtract(
+                            secondQuantity,
+                            (LengthUnit)secondUnit
+                        );
                         double ratio = firstQuantity.Divide(secondQuantity);
 
-                        resultLines.Add($"In SECOND unit ({GetUnitSymbol(secondUnit)}):");
                         resultLines.Add(
-                            $"  Addition:    {firstQuantity} + {secondQuantity} = {sumInSecond.Value:F6} {GetUnitSymbol(secondUnit)}"
+                            $"In SECOND unit ({((LengthUnit)secondUnit).GetSymbol()} - {((LengthUnit)secondUnit).GetName()}):"
                         );
                         resultLines.Add(
-                            $"  Subtraction: {firstQuantity} - {secondQuantity} = {diffInSecond.Value:F6} {GetUnitSymbol(secondUnit)}"
+                            $"  Addition:    {firstQuantity} + {secondQuantity} = {sumInSecond.Value:F2} {((LengthUnit)secondUnit).GetSymbol()}"
                         );
                         resultLines.Add(
-                            $"  Division:    {firstQuantity} ÷ {secondQuantity} = {ratio:F6} (dimensionless)"
+                            $"  Subtraction: {firstQuantity} - {secondQuantity} = {diffInSecond.Value:F2} {((LengthUnit)secondUnit).GetSymbol()}"
+                        );
+                        resultLines.Add(
+                            $"  Division:    {firstQuantity} ÷ {secondQuantity} = {ratio:F4} (dimensionless)"
                         );
                     }
-
-                    if (resultChoice == "3")
-                    {
-                        resultLines.Add("");
-                        resultLines.Add("Note: Division result is the same regardless of unit");
-                        resultLines.Add("      because it's a dimensionless ratio.");
-                    }
-
-                    ConsoleHelper.DisplayResultBox("ALL OPERATIONS RESULTS", resultLines.ToArray());
                 }
-                else
+                else if (firstUnitType == typeof(WeightUnit))
                 {
-                    ConsoleHelper.DisplayError("Invalid numeric values!");
+                    // Weight operations
+                    var firstQuantity = new GenericQuantity<WeightUnit>(
+                        firstValue,
+                        (WeightUnit)firstUnit
+                    );
+                    var secondQuantity = new GenericQuantity<WeightUnit>(
+                        secondValue,
+                        (WeightUnit)secondUnit
+                    );
+
+                    var secondInFirstUnit = secondQuantity.ConvertTo((WeightUnit)firstUnit);
+                    var firstInSecondUnit = firstQuantity.ConvertTo((WeightUnit)secondUnit);
+
+                    resultLines.Add($"{firstQuantity} and {secondQuantity}");
+                    resultLines.Add($"  = {firstQuantity} and {secondInFirstUnit} (in first unit)");
+                    resultLines.Add(
+                        $"  = {firstInSecondUnit} and {secondQuantity} (in second unit)"
+                    );
+                    resultLines.Add("");
+
+                    // Perform operations
+                    if (resultChoice == "1" || resultChoice == "3")
+                    {
+                        var sumInFirst = firstQuantity.Add(secondQuantity, (WeightUnit)firstUnit);
+                        var diffInFirst = firstQuantity.Subtract(
+                            secondQuantity,
+                            (WeightUnit)firstUnit
+                        );
+                        double ratio = firstQuantity.Divide(secondQuantity);
+
+                        resultLines.Add(
+                            $"In FIRST unit ({((WeightUnit)firstUnit).GetSymbol()} - {((WeightUnit)firstUnit).GetName()}):"
+                        );
+                        resultLines.Add(
+                            $"  Addition:    {firstQuantity} + {secondQuantity} = {sumInFirst.Value:F2} {((WeightUnit)firstUnit).GetSymbol()}"
+                        );
+                        resultLines.Add(
+                            $"  Subtraction: {firstQuantity} - {secondQuantity} = {diffInFirst.Value:F2} {((WeightUnit)firstUnit).GetSymbol()}"
+                        );
+                        resultLines.Add(
+                            $"  Division:    {firstQuantity} ÷ {secondQuantity} = {ratio:F4} (dimensionless)"
+                        );
+                        resultLines.Add("");
+                    }
+
+                    if (resultChoice == "2" || resultChoice == "3")
+                    {
+                        var sumInSecond = firstQuantity.Add(secondQuantity, (WeightUnit)secondUnit);
+                        var diffInSecond = firstQuantity.Subtract(
+                            secondQuantity,
+                            (WeightUnit)secondUnit
+                        );
+                        double ratio = firstQuantity.Divide(secondQuantity);
+
+                        resultLines.Add(
+                            $"In SECOND unit ({((WeightUnit)secondUnit).GetSymbol()} - {((WeightUnit)secondUnit).GetName()}):"
+                        );
+                        resultLines.Add(
+                            $"  Addition:    {firstQuantity} + {secondQuantity} = {sumInSecond.Value:F2} {((WeightUnit)secondUnit).GetSymbol()}"
+                        );
+                        resultLines.Add(
+                            $"  Subtraction: {firstQuantity} - {secondQuantity} = {diffInSecond.Value:F2} {((WeightUnit)secondUnit).GetSymbol()}"
+                        );
+                        resultLines.Add(
+                            $"  Division:    {firstQuantity} ÷ {secondQuantity} = {ratio:F4} (dimensionless)"
+                        );
+                    }
                 }
+                else if (firstUnitType == typeof(VolumeUnit))
+                {
+                    // Volume operations
+                    var firstQuantity = new GenericQuantity<VolumeUnit>(
+                        firstValue,
+                        (VolumeUnit)firstUnit
+                    );
+                    var secondQuantity = new GenericQuantity<VolumeUnit>(
+                        secondValue,
+                        (VolumeUnit)secondUnit
+                    );
+
+                    var secondInFirstUnit = secondQuantity.ConvertTo((VolumeUnit)firstUnit);
+                    var firstInSecondUnit = firstQuantity.ConvertTo((VolumeUnit)secondUnit);
+
+                    resultLines.Add($"{firstQuantity} and {secondQuantity}");
+                    resultLines.Add($"  = {firstQuantity} and {secondInFirstUnit} (in first unit)");
+                    resultLines.Add(
+                        $"  = {firstInSecondUnit} and {secondQuantity} (in second unit)"
+                    );
+                    resultLines.Add("");
+
+                    // Perform operations
+                    if (resultChoice == "1" || resultChoice == "3")
+                    {
+                        var sumInFirst = firstQuantity.Add(secondQuantity, (VolumeUnit)firstUnit);
+                        var diffInFirst = firstQuantity.Subtract(
+                            secondQuantity,
+                            (VolumeUnit)firstUnit
+                        );
+                        double ratio = firstQuantity.Divide(secondQuantity);
+
+                        resultLines.Add(
+                            $"In FIRST unit ({((VolumeUnit)firstUnit).GetSymbol()} - {((VolumeUnit)firstUnit).GetName()}):"
+                        );
+                        resultLines.Add(
+                            $"  Addition:    {firstQuantity} + {secondQuantity} = {sumInFirst.Value:F2} {((VolumeUnit)firstUnit).GetSymbol()}"
+                        );
+                        resultLines.Add(
+                            $"  Subtraction: {firstQuantity} - {secondQuantity} = {diffInFirst.Value:F2} {((VolumeUnit)firstUnit).GetSymbol()}"
+                        );
+                        resultLines.Add(
+                            $"  Division:    {firstQuantity} ÷ {secondQuantity} = {ratio:F4} (dimensionless)"
+                        );
+                        resultLines.Add("");
+                    }
+
+                    if (resultChoice == "2" || resultChoice == "3")
+                    {
+                        var sumInSecond = firstQuantity.Add(secondQuantity, (VolumeUnit)secondUnit);
+                        var diffInSecond = firstQuantity.Subtract(
+                            secondQuantity,
+                            (VolumeUnit)secondUnit
+                        );
+                        double ratio = firstQuantity.Divide(secondQuantity);
+
+                        resultLines.Add(
+                            $"In SECOND unit ({((VolumeUnit)secondUnit).GetSymbol()} - {((VolumeUnit)secondUnit).GetName()}):"
+                        );
+                        resultLines.Add(
+                            $"  Addition:    {firstQuantity} + {secondQuantity} = {sumInSecond.Value:F2} {((VolumeUnit)secondUnit).GetSymbol()}"
+                        );
+                        resultLines.Add(
+                            $"  Subtraction: {firstQuantity} - {secondQuantity} = {diffInSecond.Value:F2} {((VolumeUnit)secondUnit).GetSymbol()}"
+                        );
+                        resultLines.Add(
+                            $"  Division:    {firstQuantity} ÷ {secondQuantity} = {ratio:F4} (dimensionless)"
+                        );
+                    }
+                }
+                else if (firstUnitType == typeof(TemperatureUnit))
+                {
+                    // Temperature operations - only equality and conversion supported
+                    var firstQuantity = new GenericQuantity<TemperatureUnit>(
+                        firstValue,
+                        (TemperatureUnit)firstUnit
+                    );
+                    var secondQuantity = new GenericQuantity<TemperatureUnit>(
+                        secondValue,
+                        (TemperatureUnit)secondUnit
+                    );
+
+                    var secondInFirstUnit = secondQuantity.ConvertTo((TemperatureUnit)firstUnit);
+                    var firstInSecondUnit = firstQuantity.ConvertTo((TemperatureUnit)secondUnit);
+
+                    resultLines.Add($"{firstQuantity} and {secondQuantity}");
+                    resultLines.Add($"  = {firstQuantity} and {secondInFirstUnit} (in first unit)");
+                    resultLines.Add(
+                        $"  = {firstInSecondUnit} and {secondQuantity} (in second unit)"
+                    );
+                    resultLines.Add("");
+                    resultLines.Add(
+                        "⚠️  NOTE: Temperature does NOT support arithmetic operations!"
+                    );
+                    resultLines.Add(
+                        "   Only equality comparison and unit conversion are supported."
+                    );
+                }
+
+                if (resultChoice == "3" && firstUnitType != typeof(TemperatureUnit))
+                {
+                    resultLines.Add("");
+                    resultLines.Add("Note: Division result is the same regardless of unit");
+                    resultLines.Add("      because it's a dimensionless ratio.");
+                }
+
+                ConsoleHelper.DisplayResultBox("ALL OPERATIONS RESULTS", resultLines.ToArray());
             }
             catch (DivideByZeroException)
             {
                 ConsoleHelper.DisplayError("Division by zero is not allowed!");
+            }
+            catch (NotSupportedException ex)
+            {
+                ConsoleHelper.DisplayError(ex.Message);
             }
             catch (Exception ex)
             {
@@ -472,6 +580,14 @@ namespace QuantityMeasurementApp.UI.Menus
             BothUnits,
         }
 
+        private enum DivisionMode
+        {
+            RatioOnly,
+            FirstUnit,
+            SecondUnit,
+            BothUnits,
+        }
+
         private void PerformAddition(AdditionMode mode)
         {
             ConsoleHelper.ClearScreen();
@@ -485,75 +601,182 @@ namespace QuantityMeasurementApp.UI.Menus
             {
                 // First quantity
                 ConsoleHelper.DisplaySubHeader("FIRST QUANTITY");
-                object firstUnit = _unitSelector("Select unit for first quantity");
+                object firstUnit = _unitSelector(
+                    $"Select unit for first {_categoryName.ToLower()}"
+                );
                 Console.Write("Enter value: ");
                 string? firstInput = Console.ReadLine();
 
                 // Second quantity
                 ConsoleHelper.DisplaySubHeader("SECOND QUANTITY");
-                object secondUnit = _unitSelector("Select unit for second quantity");
+                object secondUnit = _unitSelector(
+                    $"Select unit for second {_categoryName.ToLower()}"
+                );
                 Console.Write("Enter value: ");
                 string? secondInput = Console.ReadLine();
 
                 if (
-                    double.TryParse(firstInput, out double firstValue)
-                    && double.TryParse(secondInput, out double secondValue)
+                    !double.TryParse(firstInput, out double firstValue)
+                    || !double.TryParse(secondInput, out double secondValue)
                 )
                 {
-                    dynamic firstQuantity = CreateQuantity(firstValue, firstUnit);
-                    dynamic secondQuantity = CreateQuantity(secondValue, secondUnit);
+                    ConsoleHelper.DisplayError("Invalid numeric values!");
+                    ConsoleHelper.WaitForKeyPress();
+                    return;
+                }
 
-                    // Convert second to first unit for display
-                    dynamic secondInFirstUnit = secondQuantity.ConvertTo(firstUnit);
+                Type unitType = firstUnit.GetType();
+
+                if (unitType == typeof(LengthUnit))
+                {
+                    var firstQuantity = new GenericQuantity<LengthUnit>(
+                        firstValue,
+                        (LengthUnit)firstUnit
+                    );
+                    var secondQuantity = new GenericQuantity<LengthUnit>(
+                        secondValue,
+                        (LengthUnit)secondUnit
+                    );
 
                     if (mode == AdditionMode.FirstUnit)
                     {
-                        dynamic sum = firstQuantity.Add(secondQuantity);
-                        string[] resultLines = new[]
-                        {
-                            $"{firstQuantity} + {secondQuantity}",
-                            $"  = {firstQuantity} + {secondInFirstUnit}",
-                            "",
-                            $"  = {sum.Value:F6} {GetUnitSymbol(firstUnit)}",
-                        };
-                        ConsoleHelper.DisplayResultBox("ADDITION RESULT", resultLines);
+                        var sum = firstQuantity.Add(secondQuantity);
+                        ConsoleHelper.DisplayAdditionResult(
+                            firstQuantity.ToString()!,
+                            secondQuantity.ToString()!,
+                            sum.Value,
+                            sum.Unit.GetSymbol()
+                        );
                     }
                     else if (mode == AdditionMode.SecondUnit)
                     {
-                        dynamic sum = firstQuantity.Add(secondQuantity, secondUnit);
-                        string[] resultLines = new[]
-                        {
-                            $"{firstQuantity} + {secondQuantity}",
-                            $"  = {firstQuantity.ConvertTo(secondUnit)} + {secondQuantity}",
-                            "",
-                            $"  = {sum.Value:F6} {GetUnitSymbol(secondUnit)}",
-                        };
-                        ConsoleHelper.DisplayResultBox("ADDITION RESULT", resultLines);
+                        var sum = firstQuantity.Add(secondQuantity, (LengthUnit)secondUnit);
+                        ConsoleHelper.DisplayAdditionResult(
+                            firstQuantity.ToString()!,
+                            secondQuantity.ToString()!,
+                            sum.Value,
+                            sum.Unit.GetSymbol()
+                        );
                     }
-                    else // BothUnits
+                    else
                     {
-                        dynamic sumInFirst = firstQuantity.Add(secondQuantity, firstUnit);
-                        dynamic sumInSecond = firstQuantity.Add(secondQuantity, secondUnit);
+                        var sumInFirst = firstQuantity.Add(secondQuantity, (LengthUnit)firstUnit);
+                        var sumInSecond = firstQuantity.Add(secondQuantity, (LengthUnit)secondUnit);
 
                         string[] resultLines = new[]
                         {
                             $"{firstQuantity} + {secondQuantity}",
-                            $"  = {firstQuantity} + {secondInFirstUnit}",
                             "",
-                            $"In {GetUnitName(firstUnit)}: {sumInFirst.Value:F6} {GetUnitSymbol(firstUnit)}",
-                            $"In {GetUnitName(secondUnit)}: {sumInSecond.Value:F6} {GetUnitSymbol(secondUnit)}",
+                            $"In {((LengthUnit)firstUnit).GetName()}: {sumInFirst.Value:F2} {((LengthUnit)firstUnit).GetSymbol()}",
+                            $"In {((LengthUnit)secondUnit).GetName()}: {sumInSecond.Value:F2} {((LengthUnit)secondUnit).GetSymbol()}",
                         };
-
                         ConsoleHelper.DisplayResultBox("ADDITION RESULTS", resultLines);
                     }
+                }
+                else if (unitType == typeof(WeightUnit))
+                {
+                    var firstQuantity = new GenericQuantity<WeightUnit>(
+                        firstValue,
+                        (WeightUnit)firstUnit
+                    );
+                    var secondQuantity = new GenericQuantity<WeightUnit>(
+                        secondValue,
+                        (WeightUnit)secondUnit
+                    );
 
-                    // Show calculation details
-                    ShowArithmeticDetails(firstQuantity, secondQuantity, "addition", firstUnit);
+                    if (mode == AdditionMode.FirstUnit)
+                    {
+                        var sum = firstQuantity.Add(secondQuantity);
+                        ConsoleHelper.DisplayAdditionResult(
+                            firstQuantity.ToString()!,
+                            secondQuantity.ToString()!,
+                            sum.Value,
+                            sum.Unit.GetSymbol()
+                        );
+                    }
+                    else if (mode == AdditionMode.SecondUnit)
+                    {
+                        var sum = firstQuantity.Add(secondQuantity, (WeightUnit)secondUnit);
+                        ConsoleHelper.DisplayAdditionResult(
+                            firstQuantity.ToString()!,
+                            secondQuantity.ToString()!,
+                            sum.Value,
+                            sum.Unit.GetSymbol()
+                        );
+                    }
+                    else
+                    {
+                        var sumInFirst = firstQuantity.Add(secondQuantity, (WeightUnit)firstUnit);
+                        var sumInSecond = firstQuantity.Add(secondQuantity, (WeightUnit)secondUnit);
+
+                        string[] resultLines = new[]
+                        {
+                            $"{firstQuantity} + {secondQuantity}",
+                            "",
+                            $"In {((WeightUnit)firstUnit).GetName()}: {sumInFirst.Value:F2} {((WeightUnit)firstUnit).GetSymbol()}",
+                            $"In {((WeightUnit)secondUnit).GetName()}: {sumInSecond.Value:F2} {((WeightUnit)secondUnit).GetSymbol()}",
+                        };
+                        ConsoleHelper.DisplayResultBox("ADDITION RESULTS", resultLines);
+                    }
+                }
+                else if (unitType == typeof(VolumeUnit))
+                {
+                    var firstQuantity = new GenericQuantity<VolumeUnit>(
+                        firstValue,
+                        (VolumeUnit)firstUnit
+                    );
+                    var secondQuantity = new GenericQuantity<VolumeUnit>(
+                        secondValue,
+                        (VolumeUnit)secondUnit
+                    );
+
+                    if (mode == AdditionMode.FirstUnit)
+                    {
+                        var sum = firstQuantity.Add(secondQuantity);
+                        ConsoleHelper.DisplayAdditionResult(
+                            firstQuantity.ToString()!,
+                            secondQuantity.ToString()!,
+                            sum.Value,
+                            sum.Unit.GetSymbol()
+                        );
+                    }
+                    else if (mode == AdditionMode.SecondUnit)
+                    {
+                        var sum = firstQuantity.Add(secondQuantity, (VolumeUnit)secondUnit);
+                        ConsoleHelper.DisplayAdditionResult(
+                            firstQuantity.ToString()!,
+                            secondQuantity.ToString()!,
+                            sum.Value,
+                            sum.Unit.GetSymbol()
+                        );
+                    }
+                    else
+                    {
+                        var sumInFirst = firstQuantity.Add(secondQuantity, (VolumeUnit)firstUnit);
+                        var sumInSecond = firstQuantity.Add(secondQuantity, (VolumeUnit)secondUnit);
+
+                        string[] resultLines = new[]
+                        {
+                            $"{firstQuantity} + {secondQuantity}",
+                            "",
+                            $"In {((VolumeUnit)firstUnit).GetName()}: {sumInFirst.Value:F2} {((VolumeUnit)firstUnit).GetSymbol()}",
+                            $"In {((VolumeUnit)secondUnit).GetName()}: {sumInSecond.Value:F2} {((VolumeUnit)secondUnit).GetSymbol()}",
+                        };
+                        ConsoleHelper.DisplayResultBox("ADDITION RESULTS", resultLines);
+                    }
+                }
+                else if (unitType == typeof(TemperatureUnit))
+                {
+                    ConsoleHelper.DisplayError("Temperature does not support addition operations.");
                 }
                 else
                 {
-                    ConsoleHelper.DisplayError("Invalid numeric values!");
+                    ConsoleHelper.DisplayError($"Unsupported unit type: {unitType.Name}");
                 }
+            }
+            catch (NotSupportedException ex)
+            {
+                ConsoleHelper.DisplayError(ex.Message);
             }
             catch (Exception ex)
             {
@@ -579,75 +802,202 @@ namespace QuantityMeasurementApp.UI.Menus
             {
                 // First quantity
                 ConsoleHelper.DisplaySubHeader("FIRST QUANTITY (Minuend)");
-                object firstUnit = _unitSelector("Select unit for first quantity");
+                object firstUnit = _unitSelector(
+                    $"Select unit for first {_categoryName.ToLower()}"
+                );
                 Console.Write("Enter value: ");
                 string? firstInput = Console.ReadLine();
 
                 // Second quantity
                 ConsoleHelper.DisplaySubHeader("SECOND QUANTITY (Subtrahend)");
-                object secondUnit = _unitSelector("Select unit for second quantity");
+                object secondUnit = _unitSelector(
+                    $"Select unit for second {_categoryName.ToLower()}"
+                );
                 Console.Write("Enter value: ");
                 string? secondInput = Console.ReadLine();
 
                 if (
-                    double.TryParse(firstInput, out double firstValue)
-                    && double.TryParse(secondInput, out double secondValue)
+                    !double.TryParse(firstInput, out double firstValue)
+                    || !double.TryParse(secondInput, out double secondValue)
                 )
                 {
-                    dynamic firstQuantity = CreateQuantity(firstValue, firstUnit);
-                    dynamic secondQuantity = CreateQuantity(secondValue, secondUnit);
+                    ConsoleHelper.DisplayError("Invalid numeric values!");
+                    ConsoleHelper.WaitForKeyPress();
+                    return;
+                }
 
-                    // Convert second to first unit for display
-                    dynamic secondInFirstUnit = secondQuantity.ConvertTo(firstUnit);
+                Type unitType = firstUnit.GetType();
+
+                if (unitType == typeof(LengthUnit))
+                {
+                    var firstQuantity = new GenericQuantity<LengthUnit>(
+                        firstValue,
+                        (LengthUnit)firstUnit
+                    );
+                    var secondQuantity = new GenericQuantity<LengthUnit>(
+                        secondValue,
+                        (LengthUnit)secondUnit
+                    );
 
                     if (mode == SubtractionMode.FirstUnit)
                     {
-                        dynamic difference = firstQuantity.Subtract(secondQuantity);
-                        string[] resultLines = new[]
-                        {
-                            $"{firstQuantity} - {secondQuantity}",
-                            $"  = {firstQuantity} - {secondInFirstUnit}",
-                            "",
-                            $"  = {difference.Value:F6} {GetUnitSymbol(firstUnit)}",
-                        };
-                        ConsoleHelper.DisplayResultBox("SUBTRACTION RESULT", resultLines);
+                        var diff = firstQuantity.Subtract(secondQuantity);
+                        ConsoleHelper.DisplaySubtractionResult(
+                            firstQuantity.ToString()!,
+                            secondQuantity.ToString()!,
+                            diff.Value,
+                            diff.Unit.GetSymbol()
+                        );
                     }
                     else if (mode == SubtractionMode.SecondUnit)
                     {
-                        dynamic difference = firstQuantity.Subtract(secondQuantity, secondUnit);
-                        string[] resultLines = new[]
-                        {
-                            $"{firstQuantity} - {secondQuantity}",
-                            $"  = {firstQuantity.ConvertTo(secondUnit)} - {secondQuantity}",
-                            "",
-                            $"  = {difference.Value:F6} {GetUnitSymbol(secondUnit)}",
-                        };
-                        ConsoleHelper.DisplayResultBox("SUBTRACTION RESULT", resultLines);
+                        var diff = firstQuantity.Subtract(secondQuantity, (LengthUnit)secondUnit);
+                        ConsoleHelper.DisplaySubtractionResult(
+                            firstQuantity.ToString()!,
+                            secondQuantity.ToString()!,
+                            diff.Value,
+                            diff.Unit.GetSymbol()
+                        );
                     }
-                    else // BothUnits
+                    else
                     {
-                        dynamic diffInFirst = firstQuantity.Subtract(secondQuantity, firstUnit);
-                        dynamic diffInSecond = firstQuantity.Subtract(secondQuantity, secondUnit);
+                        var diffInFirst = firstQuantity.Subtract(
+                            secondQuantity,
+                            (LengthUnit)firstUnit
+                        );
+                        var diffInSecond = firstQuantity.Subtract(
+                            secondQuantity,
+                            (LengthUnit)secondUnit
+                        );
 
                         string[] resultLines = new[]
                         {
                             $"{firstQuantity} - {secondQuantity}",
-                            $"  = {firstQuantity} - {secondInFirstUnit}",
                             "",
-                            $"In {GetUnitName(firstUnit)}: {diffInFirst.Value:F6} {GetUnitSymbol(firstUnit)}",
-                            $"In {GetUnitName(secondUnit)}: {diffInSecond.Value:F6} {GetUnitSymbol(secondUnit)}",
+                            $"In {((LengthUnit)firstUnit).GetName()}: {diffInFirst.Value:F2} {((LengthUnit)firstUnit).GetSymbol()}",
+                            $"In {((LengthUnit)secondUnit).GetName()}: {diffInSecond.Value:F2} {((LengthUnit)secondUnit).GetSymbol()}",
                         };
-
                         ConsoleHelper.DisplayResultBox("SUBTRACTION RESULTS", resultLines);
                     }
+                }
+                else if (unitType == typeof(WeightUnit))
+                {
+                    var firstQuantity = new GenericQuantity<WeightUnit>(
+                        firstValue,
+                        (WeightUnit)firstUnit
+                    );
+                    var secondQuantity = new GenericQuantity<WeightUnit>(
+                        secondValue,
+                        (WeightUnit)secondUnit
+                    );
 
-                    // Show calculation details
-                    ShowArithmeticDetails(firstQuantity, secondQuantity, "subtraction", firstUnit);
+                    if (mode == SubtractionMode.FirstUnit)
+                    {
+                        var diff = firstQuantity.Subtract(secondQuantity);
+                        ConsoleHelper.DisplaySubtractionResult(
+                            firstQuantity.ToString()!,
+                            secondQuantity.ToString()!,
+                            diff.Value,
+                            diff.Unit.GetSymbol()
+                        );
+                    }
+                    else if (mode == SubtractionMode.SecondUnit)
+                    {
+                        var diff = firstQuantity.Subtract(secondQuantity, (WeightUnit)secondUnit);
+                        ConsoleHelper.DisplaySubtractionResult(
+                            firstQuantity.ToString()!,
+                            secondQuantity.ToString()!,
+                            diff.Value,
+                            diff.Unit.GetSymbol()
+                        );
+                    }
+                    else
+                    {
+                        var diffInFirst = firstQuantity.Subtract(
+                            secondQuantity,
+                            (WeightUnit)firstUnit
+                        );
+                        var diffInSecond = firstQuantity.Subtract(
+                            secondQuantity,
+                            (WeightUnit)secondUnit
+                        );
+
+                        string[] resultLines = new[]
+                        {
+                            $"{firstQuantity} - {secondQuantity}",
+                            "",
+                            $"In {((WeightUnit)firstUnit).GetName()}: {diffInFirst.Value:F2} {((WeightUnit)firstUnit).GetSymbol()}",
+                            $"In {((WeightUnit)secondUnit).GetName()}: {diffInSecond.Value:F2} {((WeightUnit)secondUnit).GetSymbol()}",
+                        };
+                        ConsoleHelper.DisplayResultBox("SUBTRACTION RESULTS", resultLines);
+                    }
+                }
+                else if (unitType == typeof(VolumeUnit))
+                {
+                    var firstQuantity = new GenericQuantity<VolumeUnit>(
+                        firstValue,
+                        (VolumeUnit)firstUnit
+                    );
+                    var secondQuantity = new GenericQuantity<VolumeUnit>(
+                        secondValue,
+                        (VolumeUnit)secondUnit
+                    );
+
+                    if (mode == SubtractionMode.FirstUnit)
+                    {
+                        var diff = firstQuantity.Subtract(secondQuantity);
+                        ConsoleHelper.DisplaySubtractionResult(
+                            firstQuantity.ToString()!,
+                            secondQuantity.ToString()!,
+                            diff.Value,
+                            diff.Unit.GetSymbol()
+                        );
+                    }
+                    else if (mode == SubtractionMode.SecondUnit)
+                    {
+                        var diff = firstQuantity.Subtract(secondQuantity, (VolumeUnit)secondUnit);
+                        ConsoleHelper.DisplaySubtractionResult(
+                            firstQuantity.ToString()!,
+                            secondQuantity.ToString()!,
+                            diff.Value,
+                            diff.Unit.GetSymbol()
+                        );
+                    }
+                    else
+                    {
+                        var diffInFirst = firstQuantity.Subtract(
+                            secondQuantity,
+                            (VolumeUnit)firstUnit
+                        );
+                        var diffInSecond = firstQuantity.Subtract(
+                            secondQuantity,
+                            (VolumeUnit)secondUnit
+                        );
+
+                        string[] resultLines = new[]
+                        {
+                            $"{firstQuantity} - {secondQuantity}",
+                            "",
+                            $"In {((VolumeUnit)firstUnit).GetName()}: {diffInFirst.Value:F2} {((VolumeUnit)firstUnit).GetSymbol()}",
+                            $"In {((VolumeUnit)secondUnit).GetName()}: {diffInSecond.Value:F2} {((VolumeUnit)secondUnit).GetSymbol()}",
+                        };
+                        ConsoleHelper.DisplayResultBox("SUBTRACTION RESULTS", resultLines);
+                    }
+                }
+                else if (unitType == typeof(TemperatureUnit))
+                {
+                    ConsoleHelper.DisplayError(
+                        "Temperature does not support subtraction operations."
+                    );
                 }
                 else
                 {
-                    ConsoleHelper.DisplayError("Invalid numeric values!");
+                    ConsoleHelper.DisplayError($"Unsupported unit type: {unitType.Name}");
                 }
+            }
+            catch (NotSupportedException ex)
+            {
+                ConsoleHelper.DisplayError(ex.Message);
             }
             catch (Exception ex)
             {
@@ -657,52 +1007,228 @@ namespace QuantityMeasurementApp.UI.Menus
             ConsoleHelper.WaitForKeyPress();
         }
 
-        private void ShowArithmeticDetails(
-            dynamic firstQuantity,
-            dynamic secondQuantity,
-            string operation,
-            object displayUnit
-        )
+        private void PerformDivision(DivisionMode mode)
         {
-            dynamic baseUnit = GetBaseUnit(firstQuantity.Unit.GetType());
-            dynamic firstInBase = firstQuantity.ConvertTo(baseUnit);
-            dynamic secondInBase = secondQuantity.ConvertTo(baseUnit);
-
-            double operationInBase =
-                operation == "addition"
-                    ? firstInBase.Value + secondInBase.Value
-                    : firstInBase.Value - secondInBase.Value;
-
-            dynamic resultInDisplayUnit =
-                operation == "addition"
-                    ? firstQuantity.Add(secondQuantity, displayUnit)
-                    : firstQuantity.Subtract(secondQuantity, displayUnit);
-
-            string[] calculationLines = new[]
+            ConsoleHelper.ClearScreen();
+            string modeText = mode switch
             {
-                "Step 1: Convert to base unit",
-                $"  {firstQuantity} = {firstInBase.Value:F6} {baseUnit.GetSymbol()}",
-                $"  {secondQuantity} = {secondInBase.Value:F6} {baseUnit.GetSymbol()}",
-                "",
-                $"Step 2: Perform {operation} in base unit",
-                $"  {firstInBase.Value:F6} {GetOperator(operation)} {secondInBase.Value:F6} = {operationInBase:F6} {baseUnit.GetSymbol()}",
-                "",
-                "Step 3: Convert to target unit",
-                $"  Result = {resultInDisplayUnit.Value:F6} {GetUnitSymbol(displayUnit)}",
+                DivisionMode.RatioOnly => "RATIO ONLY",
+                DivisionMode.FirstUnit => "FIRST UNIT CONTEXT",
+                DivisionMode.SecondUnit => "SECOND UNIT CONTEXT",
+                DivisionMode.BothUnits => "BOTH UNITS",
+                _ => "DIVISION",
             };
+            ConsoleHelper.DisplayAttributedHeader($"DIVISION - {modeText}", "a ÷ b = ratio");
 
-            ConsoleHelper.DisplayResultBox("CALCULATION DETAILS", calculationLines);
-        }
-
-        private string GetOperator(string operation)
-        {
-            return operation switch
+            try
             {
-                "addition" => "+",
-                "subtraction" => "-",
-                "division" => "÷",
-                _ => "?",
-            };
+                // First quantity
+                ConsoleHelper.DisplaySubHeader("FIRST QUANTITY (Dividend)");
+                object firstUnit = _unitSelector(
+                    $"Select unit for first {_categoryName.ToLower()}"
+                );
+                Console.Write("Enter value: ");
+                string? firstInput = Console.ReadLine();
+
+                // Second quantity
+                ConsoleHelper.DisplaySubHeader("SECOND QUANTITY (Divisor)");
+                object secondUnit = _unitSelector(
+                    $"Select unit for second {_categoryName.ToLower()}"
+                );
+                Console.Write("Enter value: ");
+                string? secondInput = Console.ReadLine();
+
+                if (
+                    !double.TryParse(firstInput, out double firstValue)
+                    || !double.TryParse(secondInput, out double secondValue)
+                )
+                {
+                    ConsoleHelper.DisplayError("Invalid numeric values!");
+                    ConsoleHelper.WaitForKeyPress();
+                    return;
+                }
+
+                Type unitType = firstUnit.GetType();
+
+                if (unitType == typeof(LengthUnit))
+                {
+                    var firstQuantity = new GenericQuantity<LengthUnit>(
+                        firstValue,
+                        (LengthUnit)firstUnit
+                    );
+                    var secondQuantity = new GenericQuantity<LengthUnit>(
+                        secondValue,
+                        (LengthUnit)secondUnit
+                    );
+
+                    double ratio = firstQuantity.Divide(secondQuantity);
+                    var secondInFirstUnit = secondQuantity.ConvertTo((LengthUnit)firstUnit);
+                    var firstInSecondUnit = firstQuantity.ConvertTo((LengthUnit)secondUnit);
+
+                    List<string> resultLines = new List<string>();
+
+                    if (mode == DivisionMode.RatioOnly || mode == DivisionMode.BothUnits)
+                    {
+                        resultLines.Add($"{firstQuantity} ÷ {secondQuantity} = {ratio:F4}");
+                        resultLines.Add("");
+                        resultLines.Add(GetRatioInterpretation(ratio));
+                    }
+
+                    if (mode == DivisionMode.FirstUnit || mode == DivisionMode.BothUnits)
+                    {
+                        resultLines.Add("");
+                        resultLines.Add($"In {((LengthUnit)firstUnit).GetName()} terms:");
+                        resultLines.Add($"  {firstQuantity} ÷ {secondInFirstUnit} = {ratio:F4}");
+                        resultLines.Add(
+                            $"  → {firstValue:F2} {((LengthUnit)firstUnit).GetSymbol()} is {ratio:F2} times"
+                        );
+                        resultLines.Add(
+                            $"    {secondInFirstUnit.Value:F2} {((LengthUnit)firstUnit).GetSymbol()}"
+                        );
+                    }
+
+                    if (mode == DivisionMode.SecondUnit || mode == DivisionMode.BothUnits)
+                    {
+                        resultLines.Add("");
+                        resultLines.Add($"In {((LengthUnit)secondUnit).GetName()} terms:");
+                        resultLines.Add($"  {firstInSecondUnit} ÷ {secondQuantity} = {ratio:F4}");
+                        resultLines.Add(
+                            $"  → {firstInSecondUnit.Value:F2} {((LengthUnit)secondUnit).GetSymbol()} is {ratio:F2} times"
+                        );
+                        resultLines.Add(
+                            $"    {secondValue:F2} {((LengthUnit)secondUnit).GetSymbol()}"
+                        );
+                    }
+
+                    ConsoleHelper.DisplayResultBox("DIVISION RESULT", resultLines.ToArray());
+                }
+                else if (unitType == typeof(WeightUnit))
+                {
+                    var firstQuantity = new GenericQuantity<WeightUnit>(
+                        firstValue,
+                        (WeightUnit)firstUnit
+                    );
+                    var secondQuantity = new GenericQuantity<WeightUnit>(
+                        secondValue,
+                        (WeightUnit)secondUnit
+                    );
+
+                    double ratio = firstQuantity.Divide(secondQuantity);
+                    var secondInFirstUnit = secondQuantity.ConvertTo((WeightUnit)firstUnit);
+                    var firstInSecondUnit = firstQuantity.ConvertTo((WeightUnit)secondUnit);
+
+                    List<string> resultLines = new List<string>();
+
+                    if (mode == DivisionMode.RatioOnly || mode == DivisionMode.BothUnits)
+                    {
+                        resultLines.Add($"{firstQuantity} ÷ {secondQuantity} = {ratio:F4}");
+                        resultLines.Add("");
+                        resultLines.Add(GetRatioInterpretation(ratio));
+                    }
+
+                    if (mode == DivisionMode.FirstUnit || mode == DivisionMode.BothUnits)
+                    {
+                        resultLines.Add("");
+                        resultLines.Add($"In {((WeightUnit)firstUnit).GetName()} terms:");
+                        resultLines.Add($"  {firstQuantity} ÷ {secondInFirstUnit} = {ratio:F4}");
+                        resultLines.Add(
+                            $"  → {firstValue:F2} {((WeightUnit)firstUnit).GetSymbol()} is {ratio:F2} times"
+                        );
+                        resultLines.Add(
+                            $"    {secondInFirstUnit.Value:F2} {((WeightUnit)firstUnit).GetSymbol()}"
+                        );
+                    }
+
+                    if (mode == DivisionMode.SecondUnit || mode == DivisionMode.BothUnits)
+                    {
+                        resultLines.Add("");
+                        resultLines.Add($"In {((WeightUnit)secondUnit).GetName()} terms:");
+                        resultLines.Add($"  {firstInSecondUnit} ÷ {secondQuantity} = {ratio:F4}");
+                        resultLines.Add(
+                            $"  → {firstInSecondUnit.Value:F2} {((WeightUnit)secondUnit).GetSymbol()} is {ratio:F2} times"
+                        );
+                        resultLines.Add(
+                            $"    {secondValue:F2} {((WeightUnit)secondUnit).GetSymbol()}"
+                        );
+                    }
+
+                    ConsoleHelper.DisplayResultBox("DIVISION RESULT", resultLines.ToArray());
+                }
+                else if (unitType == typeof(VolumeUnit))
+                {
+                    var firstQuantity = new GenericQuantity<VolumeUnit>(
+                        firstValue,
+                        (VolumeUnit)firstUnit
+                    );
+                    var secondQuantity = new GenericQuantity<VolumeUnit>(
+                        secondValue,
+                        (VolumeUnit)secondUnit
+                    );
+
+                    double ratio = firstQuantity.Divide(secondQuantity);
+                    var secondInFirstUnit = secondQuantity.ConvertTo((VolumeUnit)firstUnit);
+                    var firstInSecondUnit = firstQuantity.ConvertTo((VolumeUnit)secondUnit);
+
+                    List<string> resultLines = new List<string>();
+
+                    if (mode == DivisionMode.RatioOnly || mode == DivisionMode.BothUnits)
+                    {
+                        resultLines.Add($"{firstQuantity} ÷ {secondQuantity} = {ratio:F4}");
+                        resultLines.Add("");
+                        resultLines.Add(GetRatioInterpretation(ratio));
+                    }
+
+                    if (mode == DivisionMode.FirstUnit || mode == DivisionMode.BothUnits)
+                    {
+                        resultLines.Add("");
+                        resultLines.Add($"In {((VolumeUnit)firstUnit).GetName()} terms:");
+                        resultLines.Add($"  {firstQuantity} ÷ {secondInFirstUnit} = {ratio:F4}");
+                        resultLines.Add(
+                            $"  → {firstValue:F2} {((VolumeUnit)firstUnit).GetSymbol()} is {ratio:F2} times"
+                        );
+                        resultLines.Add(
+                            $"    {secondInFirstUnit.Value:F2} {((VolumeUnit)firstUnit).GetSymbol()}"
+                        );
+                    }
+
+                    if (mode == DivisionMode.SecondUnit || mode == DivisionMode.BothUnits)
+                    {
+                        resultLines.Add("");
+                        resultLines.Add($"In {((VolumeUnit)secondUnit).GetName()} terms:");
+                        resultLines.Add($"  {firstInSecondUnit} ÷ {secondQuantity} = {ratio:F4}");
+                        resultLines.Add(
+                            $"  → {firstInSecondUnit.Value:F2} {((VolumeUnit)secondUnit).GetSymbol()} is {ratio:F2} times"
+                        );
+                        resultLines.Add(
+                            $"    {secondValue:F2} {((VolumeUnit)secondUnit).GetSymbol()}"
+                        );
+                    }
+
+                    ConsoleHelper.DisplayResultBox("DIVISION RESULT", resultLines.ToArray());
+                }
+                else if (unitType == typeof(TemperatureUnit))
+                {
+                    ConsoleHelper.DisplayError("Temperature does not support division operations.");
+                }
+                else
+                {
+                    ConsoleHelper.DisplayError($"Unsupported unit type: {unitType.Name}");
+                }
+            }
+            catch (DivideByZeroException)
+            {
+                ConsoleHelper.DisplayError("Division by zero is not allowed!");
+            }
+            catch (NotSupportedException ex)
+            {
+                ConsoleHelper.DisplayError(ex.Message);
+            }
+            catch (Exception ex)
+            {
+                ConsoleHelper.DisplayError($"Error: {ex.Message}");
+            }
+
+            ConsoleHelper.WaitForKeyPress();
         }
 
         private string GetRatioInterpretation(double ratio)
@@ -713,48 +1239,6 @@ namespace QuantityMeasurementApp.UI.Menus
                 return $"First quantity is {ratio:F2} times larger than second.";
             else
                 return $"First quantity is {(1 / ratio):F2} times smaller than second.";
-        }
-
-        private dynamic CreateQuantity(double value, object unit)
-        {
-            var type = typeof(GenericQuantity<>).MakeGenericType(unit.GetType());
-            return Activator.CreateInstance(type, value, unit)!;
-        }
-
-        private dynamic GetBaseUnit(Type unitType)
-        {
-            if (unitType == typeof(LengthUnit))
-                return LengthUnit.FEET;
-            else if (unitType == typeof(WeightUnit))
-                return WeightUnit.KILOGRAM;
-            else if (unitType == typeof(VolumeUnit))
-                return VolumeUnit.LITRE;
-            else
-                throw new ArgumentException($"Unknown unit type: {unitType}");
-        }
-
-        private string GetUnitSymbol(object unit)
-        {
-            if (unit is LengthUnit lengthUnit)
-                return lengthUnit.GetSymbol();
-            else if (unit is WeightUnit weightUnit)
-                return weightUnit.GetSymbol();
-            else if (unit is VolumeUnit volumeUnit)
-                return volumeUnit.GetSymbol();
-            else
-                return "?";
-        }
-
-        private string GetUnitName(object unit)
-        {
-            if (unit is LengthUnit lengthUnit)
-                return lengthUnit.GetName();
-            else if (unit is WeightUnit weightUnit)
-                return weightUnit.GetName();
-            else if (unit is VolumeUnit volumeUnit)
-                return volumeUnit.GetName();
-            else
-                return "?";
         }
     }
 }
