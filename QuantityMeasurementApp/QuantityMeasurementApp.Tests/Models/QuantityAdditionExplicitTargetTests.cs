@@ -402,6 +402,9 @@ namespace QuantityMeasurementApp.Tests.Models
                 { 3.0, 36.0, 1.0, 91.44 }, // All equal to 3 feet
             };
 
+            // Create converter once at the beginning
+            var converter = new UnitConverter(); // ← Add this line
+
             for (int i = 0; i < testValues.GetLength(0); i++)
             {
                 for (int j = 0; j < units.Length; j++)
@@ -418,7 +421,7 @@ namespace QuantityMeasurementApp.Tests.Models
                             // The sum should be 2 times the value in target unit
                             double expectedInFeet = 2.0 * testValues[i, 0]; // 2 * feet value
                             double expectedInTarget =
-                                expectedInFeet / target.GetConversionFactorToFeet();
+                                expectedInFeet / converter.GetConversionFactorToFeet(target); // ← Use converter here
 
                             Assert.AreEqual(
                                 expectedInTarget,

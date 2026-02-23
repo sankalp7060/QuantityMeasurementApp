@@ -13,6 +13,8 @@ namespace QuantityMeasurementApp.Models
         private readonly double _value;
         private readonly LengthUnit _unit;
 
+        private readonly UnitConverter _unitConverter;
+
         /// <summary>
         /// Initializes a new instance of the Quantity class.
         /// </summary>
@@ -26,6 +28,7 @@ namespace QuantityMeasurementApp.Models
 
             _value = value;
             _unit = unit;
+            _unitConverter = new UnitConverter();
         }
 
         /// <summary>
@@ -48,8 +51,9 @@ namespace QuantityMeasurementApp.Models
         {
             ValidateUnit(targetUnit);
 
-            double valueInBaseUnit = _value * _unit.GetConversionFactorToFeet();
-            double convertedValue = valueInBaseUnit / targetUnit.GetConversionFactorToFeet();
+            double valueInBaseUnit = _value * _unitConverter.GetConversionFactorToFeet(_unit);
+            double convertedValue =
+                valueInBaseUnit / _unitConverter.GetConversionFactorToFeet(targetUnit);
 
             return new Quantity(convertedValue, targetUnit);
         }
@@ -85,7 +89,8 @@ namespace QuantityMeasurementApp.Models
         private static Quantity AddInBaseUnit(
             Quantity first,
             Quantity second,
-            LengthUnit targetUnit
+            LengthUnit targetUnit,
+            UnitConverter unitConverter
         )
         {
             // Convert both quantities to base unit (feet)
@@ -96,7 +101,7 @@ namespace QuantityMeasurementApp.Models
             double sumInBase = firstInBase + secondInBase;
 
             // Convert sum to target unit
-            double sumInTarget = sumInBase / targetUnit.GetConversionFactorToFeet();
+            double sumInTarget = sumInBase / unitConverter.GetConversionFactorToFeet(targetUnit); // Note: targetUnit is enum, need UnitConverter instance
 
             return new Quantity(sumInTarget, targetUnit);
         }
@@ -132,7 +137,7 @@ namespace QuantityMeasurementApp.Models
 
             ValidateUnit(targetUnit);
 
-            return AddInBaseUnit(this, other, targetUnit);
+            return AddInBaseUnit(this, other, targetUnit, _unitConverter);
         }
 
         /// <summary>
@@ -157,7 +162,8 @@ namespace QuantityMeasurementApp.Models
 
             ValidateUnit(targetUnit);
 
-            return AddInBaseUnit(quantity1, quantity2, targetUnit);
+            var converter = new UnitConverter();
+            return AddInBaseUnit(quantity1, quantity2, targetUnit, converter);
         }
 
         /// <summary>
@@ -203,7 +209,7 @@ namespace QuantityMeasurementApp.Models
             double thisInFeet = this.ConvertTo(LengthUnit.FEET).Value;
             double otherInFeet = other.ConvertTo(LengthUnit.FEET).Value;
 
-            return LengthUnitExtensions.AreApproximatelyEqual(thisInFeet, otherInFeet);
+            return _unitConverter.AreApproximatelyEqual(thisInFeet, otherInFeet);
         }
 
         /// <summary>
