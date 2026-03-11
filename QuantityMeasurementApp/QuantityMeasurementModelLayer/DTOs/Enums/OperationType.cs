@@ -5,19 +5,10 @@ namespace QuantityMeasurementModelLayer.DTOs.Enums
     /// </summary>
     public enum OperationType
     {
-        /// <summary>Equality comparison operation</summary>
-        Compare,
-
-        /// <summary>Unit conversion operation</summary>
-        Convert,
-
-        /// <summary>Addition operation</summary>
-        Add,
-
-        /// <summary>Subtraction operation</summary>
-        Subtract,
-
-        /// <summary>Division operation</summary>
-        Divide,
+        Compare = 0,
+        Convert = 1,
+        Add = 2,
+        Subtract = 3,
+        Divide = 4,
     }
 }

@@ -1,11 +1,9 @@
 using System.ComponentModel.DataAnnotations;
-using QuantityMeasurementModelLayer.DTOs.Enums;
 
 namespace QuantityMeasurementModelLayer.DTOs
 {
     /// <summary>
-    /// Request DTO for quantity operations.
-    /// Represents a single quantity with value and unit.
+    /// Data Transfer Object for quantity input.
     /// </summary>
     public class QuantityDTO
     {
@@ -21,7 +19,7 @@ namespace QuantityMeasurementModelLayer.DTOs
     }
 
     /// <summary>
-    /// Request DTO for binary operations.
+    /// Request DTO for binary operations (compare, add, subtract, divide).
     /// </summary>
     public class BinaryQuantityRequest
     {
@@ -44,23 +42,5 @@ namespace QuantityMeasurementModelLayer.DTOs
 
         [Required]
         public string TargetUnit { get; set; } = string.Empty;
-    }
-
-    /// <summary>
-    /// Batch request DTO for multiple binary operations.
-    /// </summary>
-    public class BatchBinaryRequest
-    {
-        [Required]
-        public List<BinaryQuantityRequest> Requests { get; set; } = new();
-    }
-
-    /// <summary>
-    /// Batch request DTO for multiple conversion operations.
-    /// </summary>
-    public class BatchConversionRequest
-    {
-        [Required]
-        public List<ConversionRequest> Requests { get; set; } = new();
     }
 }

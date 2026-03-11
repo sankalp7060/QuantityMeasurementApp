@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using QuantityMeasurementModelLayer.DTOs.Enums;
 
 namespace QuantityMeasurementModelLayer.Entities
@@ -9,7 +10,7 @@ namespace QuantityMeasurementModelLayer.Entities
     public class QuantityMeasurementEntity
     {
         public string Id { get; set; } = Guid.NewGuid().ToString();
-        public DateTime Timestamp { get; set; }
+        public DateTime Timestamp { get; set; } = DateTime.Now;
         public OperationType OperationType { get; set; }
 
         // Binary operation fields
@@ -33,6 +34,9 @@ namespace QuantityMeasurementModelLayer.Entities
         public bool IsSuccess { get; set; }
         public string? ErrorMessage { get; set; }
 
+        /// <summary>
+        /// Creates an entity for binary operation.
+        /// </summary>
         public static QuantityMeasurementEntity CreateBinaryOperation(
             OperationType operation,
             double q1Value,
@@ -51,7 +55,7 @@ namespace QuantityMeasurementModelLayer.Entities
         {
             return new QuantityMeasurementEntity
             {
-                Timestamp = DateTime.UtcNow,
+                Timestamp = DateTime.Now,
                 OperationType = operation,
                 Quantity1Value = q1Value,
                 Quantity1Unit = q1Unit,
@@ -68,6 +72,9 @@ namespace QuantityMeasurementModelLayer.Entities
             };
         }
 
+        /// <summary>
+        /// Creates an entity for conversion operation.
+        /// </summary>
         public static QuantityMeasurementEntity CreateConversion(
             double sourceValue,
             string sourceUnit,
@@ -82,7 +89,7 @@ namespace QuantityMeasurementModelLayer.Entities
         {
             return new QuantityMeasurementEntity
             {
-                Timestamp = DateTime.UtcNow,
+                Timestamp = DateTime.Now,
                 OperationType = OperationType.Convert,
                 SourceValue = sourceValue,
                 SourceUnit = sourceUnit,

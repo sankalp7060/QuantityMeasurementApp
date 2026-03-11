@@ -4,32 +4,31 @@ using Microsoft.Extensions.Logging;
 using QuantityMeasurementApp.Core.Exceptions;
 using QuantityMeasurementApp.Domain.Quantities;
 using QuantityMeasurementApp.Domain.Units;
+using QuantityMeasurementBusinessLayer.Exceptions;
 using QuantityMeasurementBusinessLayer.Interface;
 using QuantityMeasurementModelLayer.DTOs;
 using QuantityMeasurementModelLayer.DTOs.Enums;
 using QuantityMeasurementModelLayer.Entities;
 using QuantityMeasurementRepositoryLayer.Interface;
-using QuantityMeasurementRepositoryLayer.Services;
 
 namespace QuantityMeasurementBusinessLayer.Services
 {
     /// <summary>
     /// Implementation of quantity measurement business logic.
+    /// Follows Single Responsibility and Open/Closed Principles.
     /// </summary>
     public class QuantityMeasurementService : IQuantityMeasurementService
     {
         private readonly IQuantityMeasurementRepository _repository;
-        private readonly IRedisCacheRepository _cacheRepository;
         private readonly ILogger<QuantityMeasurementService> _logger;
 
         public QuantityMeasurementService(
             ILogger<QuantityMeasurementService> logger,
-            IRedisCacheRepository cacheRepository
+            IQuantityMeasurementRepository repository
         )
         {
-            _repository = QuantityMeasurementCacheRepository.Instance;
             _logger = logger;
-            _cacheRepository = cacheRepository;
+            _repository = repository;
         }
 
         #region Private Helper Methods
@@ -106,69 +105,102 @@ namespace QuantityMeasurementBusinessLayer.Services
             return true;
         }
 
-        private object GetBaseUnit(string category)
-        {
-            return category.ToUpper() switch
-            {
-                "LENGTH" => LengthUnit.FEET,
-                "WEIGHT" => WeightUnit.KILOGRAM,
-                "VOLUME" => VolumeUnit.LITRE,
-                "TEMPERATURE" => TemperatureUnit.CELSIUS,
-                _ => null,
-            };
-        }
-
         private string GetUnitSymbol(object unit)
         {
             return unit.GetType().GetMethod("GetSymbol")?.Invoke(unit, null)?.ToString() ?? "";
         }
 
-        private async Task CacheOperationResult(
-            string operationType,
-            object request,
-            object response
+        private QuantityMeasurementEntity CreateSuccessEntity(
+            OperationType operation,
+            BinaryQuantityRequest request,
+            double resultValue,
+            string resultUnit,
+            string formattedResult
         )
         {
-            try
-            {
-                if (_cacheRepository == null)
-                    return;
+            return QuantityMeasurementEntity.CreateBinaryOperation(
+                operation,
+                request.Quantity1.Value,
+                request.Quantity1.Unit,
+                request.Quantity1.Category,
+                request.Quantity2.Value,
+                request.Quantity2.Unit,
+                request.Quantity2.Category,
+                request.TargetUnit,
+                resultValue,
+                resultUnit,
+                formattedResult,
+                true
+            );
+        }
 
-                var cacheKey = $"{operationType}:{DateTime.UtcNow.Ticks}:{Guid.NewGuid()}";
+        private QuantityMeasurementEntity CreateConversionSuccessEntity(
+            ConversionRequest request,
+            double resultValue,
+            string resultUnit,
+            string formattedResult
+        )
+        {
+            return QuantityMeasurementEntity.CreateConversion(
+                request.Source.Value,
+                request.Source.Unit,
+                request.Source.Category,
+                request.TargetUnit,
+                resultValue,
+                resultUnit,
+                formattedResult,
+                true
+            );
+        }
 
-                var entity = new QuantityMeasurementEntity
-                {
-                    Id = cacheKey,
-                    Timestamp = DateTime.UtcNow,
-                    OperationType = operationType switch
-                    {
-                        "Compare" => OperationType.Compare,
-                        "Convert" => OperationType.Convert,
-                        "Add" => OperationType.Add,
-                        "Subtract" => OperationType.Subtract,
-                        "Divide" => OperationType.Divide,
-                        _ => OperationType.Compare,
-                    },
-                    IsSuccess = true,
-                    FormattedResult = response?.ToString(),
-                };
+        private QuantityMeasurementEntity CreateErrorEntity(
+            OperationType operation,
+            BinaryQuantityRequest request,
+            string errorMessage
+        )
+        {
+            return QuantityMeasurementEntity.CreateBinaryOperation(
+                operation,
+                request.Quantity1.Value,
+                request.Quantity1.Unit,
+                request.Quantity1.Category,
+                request.Quantity2.Value,
+                request.Quantity2.Unit,
+                request.Quantity2.Category,
+                request.TargetUnit,
+                null,
+                null,
+                null,
+                false,
+                errorMessage
+            );
+        }
 
-                await _cacheRepository.SaveAsync(entity);
-                _logger.LogDebug("Cached operation result with key: {CacheKey}", cacheKey);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogWarning(ex, "Failed to cache operation result");
-            }
+        private QuantityMeasurementEntity CreateConversionErrorEntity(
+            ConversionRequest request,
+            string errorMessage
+        )
+        {
+            return QuantityMeasurementEntity.CreateConversion(
+                request.Source.Value,
+                request.Source.Unit,
+                request.Source.Category,
+                request.TargetUnit,
+                null,
+                null,
+                null,
+                false,
+                errorMessage
+            );
         }
 
         #endregion
 
-        #region Public Single Operation Methods
+        #region Public Methods
 
         public async Task<QuantityResponse> CompareQuantitiesAsync(BinaryQuantityRequest request)
         {
-            return await Task.Run(async () =>
+            return await Task.Run(() =>
             {
                 try
                 {
@@ -178,6 +210,7 @@ namespace QuantityMeasurementBusinessLayer.Services
                         $"{request.Quantity2.Value} {request.Quantity2.Unit}"
                     );
 
+                    // Validate category match
                     if (
                         !ValidateSameCategory(
                             request.Quantity1,
@@ -186,57 +219,34 @@ namespace QuantityMeasurementBusinessLayer.Services
                         )
                     )
                     {
-                        var errorEntity = QuantityMeasurementEntity.CreateBinaryOperation(
+                        var errorEntity = CreateErrorEntity(
                             OperationType.Compare,
-                            request.Quantity1.Value,
-                            request.Quantity1.Unit,
-                            request.Quantity1.Category,
-                            request.Quantity2.Value,
-                            request.Quantity2.Unit,
-                            request.Quantity2.Category,
-                            null,
-                            null,
-                            null,
-                            null,
-                            false,
+                            request,
                             categoryError
                         );
                         _repository.Save(errorEntity);
-
-                        return QuantityResponse.ErrorResponse(
-                            categoryError!,
-                            OperationType.Compare
-                        );
+                        return QuantityResponse.ErrorResponse(categoryError, OperationType.Compare);
                     }
 
+                    // Create quantity objects
                     var q1 = CreateQuantity(request.Quantity1);
                     var q2 = CreateQuantity(request.Quantity2);
 
                     if (q1 == null || q2 == null)
                     {
-                        var errorEntity = QuantityMeasurementEntity.CreateBinaryOperation(
+                        var errorEntity = CreateErrorEntity(
                             OperationType.Compare,
-                            request.Quantity1.Value,
-                            request.Quantity1.Unit,
-                            request.Quantity1.Category,
-                            request.Quantity2.Value,
-                            request.Quantity2.Unit,
-                            request.Quantity2.Category,
-                            null,
-                            null,
-                            null,
-                            null,
-                            false,
+                            request,
                             "Invalid quantity format"
                         );
                         _repository.Save(errorEntity);
-
                         return QuantityResponse.ErrorResponse(
                             "Invalid quantity format",
                             OperationType.Compare
                         );
                     }
 
+                    // Perform comparison
                     var equalsMethod = q1.GetType().GetMethod("Equals", new[] { typeof(object) });
                     var result = (bool)equalsMethod!.Invoke(q1, new[] { q2 })!;
 
@@ -247,17 +257,7 @@ namespace QuantityMeasurementBusinessLayer.Services
                     var formattedResult =
                         $"{request.Quantity1.Value} {request.Quantity1.Unit} {(result ? "=" : "≠")} {request.Quantity2.Value} {request.Quantity2.Unit}";
 
-                    var response = new QuantityResponse
-                    {
-                        StatusCode = 200,
-                        Success = true,
-                        Message = message,
-                        Result = result ? 1.0 : 0.0,
-                        FormattedResult = formattedResult,
-                        Operation = OperationType.Compare,
-                        Timestamp = DateTime.UtcNow,
-                    };
-
+                    // Save to repository
                     var entity = QuantityMeasurementEntity.CreateBinaryOperation(
                         OperationType.Compare,
                         request.Quantity1.Value,
@@ -274,42 +274,34 @@ namespace QuantityMeasurementBusinessLayer.Services
                     );
                     _repository.Save(entity);
 
-                    await CacheOperationResult("Compare", request, response);
-
-                    return response;
+                    return new QuantityResponse
+                    {
+                        Success = true,
+                        Message = message,
+                        Result = result ? 1.0 : 0.0,
+                        FormattedResult = formattedResult,
+                        Operation = OperationType.Compare,
+                        Timestamp = DateTime.UtcNow,
+                    };
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error comparing quantities");
-                    var errorEntity = QuantityMeasurementEntity.CreateBinaryOperation(
-                        OperationType.Compare,
-                        request.Quantity1.Value,
-                        request.Quantity1.Unit,
-                        request.Quantity1.Category,
-                        request.Quantity2.Value,
-                        request.Quantity2.Unit,
-                        request.Quantity2.Category,
-                        null,
-                        null,
-                        null,
-                        null,
-                        false,
-                        ex.Message
-                    );
-                    _repository.Save(errorEntity);
-
-                    return QuantityResponse.ErrorResponse(
+                    var quantityEx = new QuantityMeasurementException(
                         $"Comparison error: {ex.Message}",
-                        OperationType.Compare,
-                        500
-                    );
+                        ex
+                    )
+                    {
+                        OperationType = "Compare",
+                    };
+                    throw quantityEx;
                 }
             });
         }
 
         public async Task<QuantityResponse> ConvertQuantityAsync(ConversionRequest request)
         {
-            return await Task.Run(async () =>
+            return await Task.Run(() =>
             {
                 try
                 {
@@ -323,19 +315,11 @@ namespace QuantityMeasurementBusinessLayer.Services
                     var source = CreateQuantity(request.Source);
                     if (source == null)
                     {
-                        var errorEntity = QuantityMeasurementEntity.CreateConversion(
-                            request.Source.Value,
-                            request.Source.Unit,
-                            request.Source.Category,
-                            request.TargetUnit,
-                            null,
-                            null,
-                            null,
-                            false,
+                        var errorEntity = CreateConversionErrorEntity(
+                            request,
                             "Invalid source quantity"
                         );
                         _repository.Save(errorEntity);
-
                         return QuantityResponse.ErrorResponse(
                             "Invalid source quantity",
                             OperationType.Convert
@@ -345,19 +329,11 @@ namespace QuantityMeasurementBusinessLayer.Services
                     var targetUnit = GetUnit(request.Source.Category, request.TargetUnit);
                     if (targetUnit == null)
                     {
-                        var errorEntity = QuantityMeasurementEntity.CreateConversion(
-                            request.Source.Value,
-                            request.Source.Unit,
-                            request.Source.Category,
-                            request.TargetUnit,
-                            null,
-                            null,
-                            null,
-                            false,
+                        var errorEntity = CreateConversionErrorEntity(
+                            request,
                             $"Invalid target unit: {request.TargetUnit}"
                         );
                         _repository.Save(errorEntity);
-
                         return QuantityResponse.ErrorResponse(
                             $"Invalid target unit: {request.TargetUnit}",
                             OperationType.Convert
@@ -370,19 +346,8 @@ namespace QuantityMeasurementBusinessLayer.Services
                         ?.Invoke(source, new[] { targetUnit });
                     if (converted == null)
                     {
-                        var errorEntity = QuantityMeasurementEntity.CreateConversion(
-                            request.Source.Value,
-                            request.Source.Unit,
-                            request.Source.Category,
-                            request.TargetUnit,
-                            null,
-                            null,
-                            null,
-                            false,
-                            "Conversion failed"
-                        );
+                        var errorEntity = CreateConversionErrorEntity(request, "Conversion failed");
                         _repository.Save(errorEntity);
-
                         return QuantityResponse.ErrorResponse(
                             "Conversion failed",
                             OperationType.Convert
@@ -395,75 +360,47 @@ namespace QuantityMeasurementBusinessLayer.Services
                     var formattedResult =
                         $"{request.Source.Value} {request.Source.Unit} = {resultValue:F6} {resultUnitSymbol}";
 
-                    var response = QuantityResponse.SuccessResponse(
+                    // Save to repository
+                    var entity = CreateConversionSuccessEntity(
+                        request,
+                        resultValue,
+                        resultUnitSymbol,
+                        formattedResult
+                    );
+                    _repository.Save(entity);
+
+                    return QuantityResponse.SuccessResponse(
                         resultValue,
                         resultUnitSymbol,
                         OperationType.Convert,
                         formattedResult
                     );
-
-                    var entity = QuantityMeasurementEntity.CreateConversion(
-                        request.Source.Value,
-                        request.Source.Unit,
-                        request.Source.Category,
-                        request.TargetUnit,
-                        resultValue,
-                        resultUnitSymbol,
-                        formattedResult,
-                        true
-                    );
-                    _repository.Save(entity);
-
-                    await CacheOperationResult("Convert", request, response);
-
-                    return response;
                 }
                 catch (NotSupportedException ex)
                 {
                     _logger.LogWarning(ex, "Unsupported conversion operation");
-                    var errorEntity = QuantityMeasurementEntity.CreateConversion(
-                        request.Source.Value,
-                        request.Source.Unit,
-                        request.Source.Category,
-                        request.TargetUnit,
-                        null,
-                        null,
-                        null,
-                        false,
-                        ex.Message
-                    );
+                    var errorEntity = CreateConversionErrorEntity(request, ex.Message);
                     _repository.Save(errorEntity);
-
                     return QuantityResponse.ErrorResponse(ex.Message, OperationType.Convert);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error during conversion");
-                    var errorEntity = QuantityMeasurementEntity.CreateConversion(
-                        request.Source.Value,
-                        request.Source.Unit,
-                        request.Source.Category,
-                        request.TargetUnit,
-                        null,
-                        null,
-                        null,
-                        false,
-                        ex.Message
-                    );
-                    _repository.Save(errorEntity);
-
-                    return QuantityResponse.ErrorResponse(
+                    var quantityEx = new QuantityMeasurementException(
                         $"Conversion error: {ex.Message}",
-                        OperationType.Convert,
-                        500
-                    );
+                        ex
+                    )
+                    {
+                        OperationType = "Convert",
+                    };
+                    throw quantityEx;
                 }
             });
         }
 
         public async Task<QuantityResponse> AddQuantitiesAsync(BinaryQuantityRequest request)
         {
-            return await Task.Run(async () =>
+            return await Task.Run(() =>
             {
                 try
                 {
@@ -473,6 +410,7 @@ namespace QuantityMeasurementBusinessLayer.Services
                         $"{request.Quantity2.Value} {request.Quantity2.Unit}"
                     );
 
+                    // Validate category match
                     if (
                         !ValidateSameCategory(
                             request.Quantity1,
@@ -481,24 +419,13 @@ namespace QuantityMeasurementBusinessLayer.Services
                         )
                     )
                     {
-                        var errorEntity = QuantityMeasurementEntity.CreateBinaryOperation(
+                        var errorEntity = CreateErrorEntity(
                             OperationType.Add,
-                            request.Quantity1.Value,
-                            request.Quantity1.Unit,
-                            request.Quantity1.Category,
-                            request.Quantity2.Value,
-                            request.Quantity2.Unit,
-                            request.Quantity2.Category,
-                            request.TargetUnit,
-                            null,
-                            null,
-                            null,
-                            false,
+                            request,
                             categoryError
                         );
                         _repository.Save(errorEntity);
-
-                        return QuantityResponse.ErrorResponse(categoryError!, OperationType.Add);
+                        return QuantityResponse.ErrorResponse(categoryError, OperationType.Add);
                     }
 
                     var q1 = CreateQuantity(request.Quantity1);
@@ -506,52 +433,31 @@ namespace QuantityMeasurementBusinessLayer.Services
 
                     if (q1 == null || q2 == null)
                     {
-                        var errorEntity = QuantityMeasurementEntity.CreateBinaryOperation(
+                        var errorEntity = CreateErrorEntity(
                             OperationType.Add,
-                            request.Quantity1.Value,
-                            request.Quantity1.Unit,
-                            request.Quantity1.Category,
-                            request.Quantity2.Value,
-                            request.Quantity2.Unit,
-                            request.Quantity2.Category,
-                            request.TargetUnit,
-                            null,
-                            null,
-                            null,
-                            false,
+                            request,
                             "Invalid quantity format"
                         );
                         _repository.Save(errorEntity);
-
                         return QuantityResponse.ErrorResponse(
                             "Invalid quantity format",
                             OperationType.Add
                         );
                     }
 
+                    // Determine target unit
                     object targetUnit;
                     if (!string.IsNullOrEmpty(request.TargetUnit))
                     {
                         targetUnit = GetUnit(request.Quantity1.Category, request.TargetUnit);
                         if (targetUnit == null)
                         {
-                            var errorEntity = QuantityMeasurementEntity.CreateBinaryOperation(
+                            var errorEntity = CreateErrorEntity(
                                 OperationType.Add,
-                                request.Quantity1.Value,
-                                request.Quantity1.Unit,
-                                request.Quantity1.Category,
-                                request.Quantity2.Value,
-                                request.Quantity2.Unit,
-                                request.Quantity2.Category,
-                                request.TargetUnit,
-                                null,
-                                null,
-                                null,
-                                false,
+                                request,
                                 $"Invalid target unit: {request.TargetUnit}"
                             );
                             _repository.Save(errorEntity);
-
                             return QuantityResponse.ErrorResponse(
                                 $"Invalid target unit: {request.TargetUnit}",
                                 OperationType.Add
@@ -563,6 +469,7 @@ namespace QuantityMeasurementBusinessLayer.Services
                         targetUnit = q1.GetType().GetProperty("Unit")!.GetValue(q1)!;
                     }
 
+                    // Perform addition
                     var result = q1.GetType()
                         .GetMethod("Add", new[] { q2.GetType(), targetUnit.GetType() })!
                         .Invoke(q1, new[] { q2, targetUnit });
@@ -573,87 +480,48 @@ namespace QuantityMeasurementBusinessLayer.Services
                     var formattedResult =
                         $"{request.Quantity1.Value} {request.Quantity1.Unit} + {request.Quantity2.Value} {request.Quantity2.Unit} = {resultValue:F6} {resultUnitSymbol}";
 
-                    var response = QuantityResponse.SuccessResponse(
+                    // Save to repository
+                    var entity = CreateSuccessEntity(
+                        OperationType.Add,
+                        request,
+                        resultValue,
+                        resultUnitSymbol,
+                        formattedResult
+                    );
+                    _repository.Save(entity);
+
+                    return QuantityResponse.SuccessResponse(
                         resultValue,
                         resultUnitSymbol,
                         OperationType.Add,
                         formattedResult
                     );
-
-                    var entity = QuantityMeasurementEntity.CreateBinaryOperation(
-                        OperationType.Add,
-                        request.Quantity1.Value,
-                        request.Quantity1.Unit,
-                        request.Quantity1.Category,
-                        request.Quantity2.Value,
-                        request.Quantity2.Unit,
-                        request.Quantity2.Category,
-                        request.TargetUnit,
-                        resultValue,
-                        resultUnitSymbol,
-                        formattedResult,
-                        true
-                    );
-                    _repository.Save(entity);
-
-                    await CacheOperationResult("Add", request, response);
-
-                    return response;
                 }
                 catch (NotSupportedException ex)
                 {
                     _logger.LogWarning(ex, "Unsupported addition operation");
-                    var errorEntity = QuantityMeasurementEntity.CreateBinaryOperation(
-                        OperationType.Add,
-                        request.Quantity1.Value,
-                        request.Quantity1.Unit,
-                        request.Quantity1.Category,
-                        request.Quantity2.Value,
-                        request.Quantity2.Unit,
-                        request.Quantity2.Category,
-                        request.TargetUnit,
-                        null,
-                        null,
-                        null,
-                        false,
-                        ex.Message
-                    );
+                    var errorEntity = CreateErrorEntity(OperationType.Add, request, ex.Message);
                     _repository.Save(errorEntity);
-
                     return QuantityResponse.ErrorResponse(ex.Message, OperationType.Add);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error during addition");
-                    var errorEntity = QuantityMeasurementEntity.CreateBinaryOperation(
-                        OperationType.Add,
-                        request.Quantity1.Value,
-                        request.Quantity1.Unit,
-                        request.Quantity1.Category,
-                        request.Quantity2.Value,
-                        request.Quantity2.Unit,
-                        request.Quantity2.Category,
-                        request.TargetUnit,
-                        null,
-                        null,
-                        null,
-                        false,
-                        ex.Message
-                    );
-                    _repository.Save(errorEntity);
-
-                    return QuantityResponse.ErrorResponse(
+                    var quantityEx = new QuantityMeasurementException(
                         $"Addition error: {ex.Message}",
-                        OperationType.Add,
-                        500
-                    );
+                        ex
+                    )
+                    {
+                        OperationType = "Add",
+                    };
+                    throw quantityEx;
                 }
             });
         }
 
         public async Task<QuantityResponse> SubtractQuantitiesAsync(BinaryQuantityRequest request)
         {
-            return await Task.Run(async () =>
+            return await Task.Run(() =>
             {
                 try
                 {
@@ -663,6 +531,7 @@ namespace QuantityMeasurementBusinessLayer.Services
                         $"{request.Quantity2.Value} {request.Quantity2.Unit}"
                     );
 
+                    // Validate category match
                     if (
                         !ValidateSameCategory(
                             request.Quantity1,
@@ -671,25 +540,14 @@ namespace QuantityMeasurementBusinessLayer.Services
                         )
                     )
                     {
-                        var errorEntity = QuantityMeasurementEntity.CreateBinaryOperation(
+                        var errorEntity = CreateErrorEntity(
                             OperationType.Subtract,
-                            request.Quantity1.Value,
-                            request.Quantity1.Unit,
-                            request.Quantity1.Category,
-                            request.Quantity2.Value,
-                            request.Quantity2.Unit,
-                            request.Quantity2.Category,
-                            request.TargetUnit,
-                            null,
-                            null,
-                            null,
-                            false,
+                            request,
                             categoryError
                         );
                         _repository.Save(errorEntity);
-
                         return QuantityResponse.ErrorResponse(
-                            categoryError!,
+                            categoryError,
                             OperationType.Subtract
                         );
                     }
@@ -699,52 +557,31 @@ namespace QuantityMeasurementBusinessLayer.Services
 
                     if (q1 == null || q2 == null)
                     {
-                        var errorEntity = QuantityMeasurementEntity.CreateBinaryOperation(
+                        var errorEntity = CreateErrorEntity(
                             OperationType.Subtract,
-                            request.Quantity1.Value,
-                            request.Quantity1.Unit,
-                            request.Quantity1.Category,
-                            request.Quantity2.Value,
-                            request.Quantity2.Unit,
-                            request.Quantity2.Category,
-                            request.TargetUnit,
-                            null,
-                            null,
-                            null,
-                            false,
+                            request,
                             "Invalid quantity format"
                         );
                         _repository.Save(errorEntity);
-
                         return QuantityResponse.ErrorResponse(
                             "Invalid quantity format",
                             OperationType.Subtract
                         );
                     }
 
+                    // Determine target unit
                     object targetUnit;
                     if (!string.IsNullOrEmpty(request.TargetUnit))
                     {
                         targetUnit = GetUnit(request.Quantity1.Category, request.TargetUnit);
                         if (targetUnit == null)
                         {
-                            var errorEntity = QuantityMeasurementEntity.CreateBinaryOperation(
+                            var errorEntity = CreateErrorEntity(
                                 OperationType.Subtract,
-                                request.Quantity1.Value,
-                                request.Quantity1.Unit,
-                                request.Quantity1.Category,
-                                request.Quantity2.Value,
-                                request.Quantity2.Unit,
-                                request.Quantity2.Category,
-                                request.TargetUnit,
-                                null,
-                                null,
-                                null,
-                                false,
+                                request,
                                 $"Invalid target unit: {request.TargetUnit}"
                             );
                             _repository.Save(errorEntity);
-
                             return QuantityResponse.ErrorResponse(
                                 $"Invalid target unit: {request.TargetUnit}",
                                 OperationType.Subtract
@@ -756,6 +593,7 @@ namespace QuantityMeasurementBusinessLayer.Services
                         targetUnit = q1.GetType().GetProperty("Unit")!.GetValue(q1)!;
                     }
 
+                    // Perform subtraction
                     var result = q1.GetType()
                         .GetMethod("Subtract", new[] { q2.GetType(), targetUnit.GetType() })!
                         .Invoke(q1, new[] { q2, targetUnit });
@@ -766,87 +604,52 @@ namespace QuantityMeasurementBusinessLayer.Services
                     var formattedResult =
                         $"{request.Quantity1.Value} {request.Quantity1.Unit} - {request.Quantity2.Value} {request.Quantity2.Unit} = {resultValue:F6} {resultUnitSymbol}";
 
-                    var response = QuantityResponse.SuccessResponse(
+                    // Save to repository
+                    var entity = CreateSuccessEntity(
+                        OperationType.Subtract,
+                        request,
+                        resultValue,
+                        resultUnitSymbol,
+                        formattedResult
+                    );
+                    _repository.Save(entity);
+
+                    return QuantityResponse.SuccessResponse(
                         resultValue,
                         resultUnitSymbol,
                         OperationType.Subtract,
                         formattedResult
                     );
-
-                    var entity = QuantityMeasurementEntity.CreateBinaryOperation(
-                        OperationType.Subtract,
-                        request.Quantity1.Value,
-                        request.Quantity1.Unit,
-                        request.Quantity1.Category,
-                        request.Quantity2.Value,
-                        request.Quantity2.Unit,
-                        request.Quantity2.Category,
-                        request.TargetUnit,
-                        resultValue,
-                        resultUnitSymbol,
-                        formattedResult,
-                        true
-                    );
-                    _repository.Save(entity);
-
-                    await CacheOperationResult("Subtract", request, response);
-
-                    return response;
                 }
                 catch (NotSupportedException ex)
                 {
                     _logger.LogWarning(ex, "Unsupported subtraction operation");
-                    var errorEntity = QuantityMeasurementEntity.CreateBinaryOperation(
+                    var errorEntity = CreateErrorEntity(
                         OperationType.Subtract,
-                        request.Quantity1.Value,
-                        request.Quantity1.Unit,
-                        request.Quantity1.Category,
-                        request.Quantity2.Value,
-                        request.Quantity2.Unit,
-                        request.Quantity2.Category,
-                        request.TargetUnit,
-                        null,
-                        null,
-                        null,
-                        false,
+                        request,
                         ex.Message
                     );
                     _repository.Save(errorEntity);
-
                     return QuantityResponse.ErrorResponse(ex.Message, OperationType.Subtract);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error during subtraction");
-                    var errorEntity = QuantityMeasurementEntity.CreateBinaryOperation(
-                        OperationType.Subtract,
-                        request.Quantity1.Value,
-                        request.Quantity1.Unit,
-                        request.Quantity1.Category,
-                        request.Quantity2.Value,
-                        request.Quantity2.Unit,
-                        request.Quantity2.Category,
-                        request.TargetUnit,
-                        null,
-                        null,
-                        null,
-                        false,
-                        ex.Message
-                    );
-                    _repository.Save(errorEntity);
-
-                    return QuantityResponse.ErrorResponse(
+                    var quantityEx = new QuantityMeasurementException(
                         $"Subtraction error: {ex.Message}",
-                        OperationType.Subtract,
-                        500
-                    );
+                        ex
+                    )
+                    {
+                        OperationType = "Subtract",
+                    };
+                    throw quantityEx;
                 }
             });
         }
 
         public async Task<DivisionResponse> DivideQuantitiesAsync(BinaryQuantityRequest request)
         {
-            return await Task.Run(async () =>
+            return await Task.Run(() =>
             {
                 try
                 {
@@ -856,6 +659,7 @@ namespace QuantityMeasurementBusinessLayer.Services
                         $"{request.Quantity2.Value} {request.Quantity2.Unit}"
                     );
 
+                    // Validate category match
                     if (
                         !ValidateSameCategory(
                             request.Quantity1,
@@ -864,24 +668,13 @@ namespace QuantityMeasurementBusinessLayer.Services
                         )
                     )
                     {
-                        var errorEntity = QuantityMeasurementEntity.CreateBinaryOperation(
+                        var errorEntity = CreateErrorEntity(
                             OperationType.Divide,
-                            request.Quantity1.Value,
-                            request.Quantity1.Unit,
-                            request.Quantity1.Category,
-                            request.Quantity2.Value,
-                            request.Quantity2.Unit,
-                            request.Quantity2.Category,
-                            null,
-                            null,
-                            null,
-                            null,
-                            false,
+                            request,
                             categoryError
                         );
                         _repository.Save(errorEntity);
-
-                        return DivisionResponse.ErrorResponse(categoryError!);
+                        return DivisionResponse.ErrorResponse(categoryError);
                     }
 
                     var q1 = CreateQuantity(request.Quantity1);
@@ -889,26 +682,16 @@ namespace QuantityMeasurementBusinessLayer.Services
 
                     if (q1 == null || q2 == null)
                     {
-                        var errorEntity = QuantityMeasurementEntity.CreateBinaryOperation(
+                        var errorEntity = CreateErrorEntity(
                             OperationType.Divide,
-                            request.Quantity1.Value,
-                            request.Quantity1.Unit,
-                            request.Quantity1.Category,
-                            request.Quantity2.Value,
-                            request.Quantity2.Unit,
-                            request.Quantity2.Category,
-                            null,
-                            null,
-                            null,
-                            null,
-                            false,
+                            request,
                             "Invalid quantity format"
                         );
                         _repository.Save(errorEntity);
-
                         return DivisionResponse.ErrorResponse("Invalid quantity format");
                     }
 
+                    // Perform division
                     var divideMethod = q1.GetType().GetMethod("Divide", new[] { q2.GetType() });
                     var ratio = (double)divideMethod!.Invoke(q1, new[] { q2 })!;
 
@@ -929,8 +712,7 @@ namespace QuantityMeasurementBusinessLayer.Services
                             $"{request.Quantity1.Value} {request.Quantity1.Unit} is {inverse:F2} times smaller than {request.Quantity2.Value} {request.Quantity2.Unit}";
                     }
 
-                    var response = DivisionResponse.SuccessResponse(ratio, interpretation);
-
+                    // Save to repository
                     var entity = QuantityMeasurementEntity.CreateBinaryOperation(
                         OperationType.Divide,
                         request.Quantity1.Value,
@@ -947,392 +729,39 @@ namespace QuantityMeasurementBusinessLayer.Services
                     );
                     _repository.Save(entity);
 
-                    await CacheOperationResult("Divide", request, response);
-
-                    return response;
+                    return DivisionResponse.SuccessResponse(ratio, interpretation);
                 }
-                catch (DivideByZeroException)
+                catch (DivideByZeroException ex)
                 {
-                    _logger.LogWarning("Division by zero attempted");
-                    var errorEntity = QuantityMeasurementEntity.CreateBinaryOperation(
+                    _logger.LogWarning(ex, "Division by zero attempted");
+                    var errorEntity = CreateErrorEntity(
                         OperationType.Divide,
-                        request.Quantity1.Value,
-                        request.Quantity1.Unit,
-                        request.Quantity1.Category,
-                        request.Quantity2.Value,
-                        request.Quantity2.Unit,
-                        request.Quantity2.Category,
-                        null,
-                        null,
-                        null,
-                        null,
-                        false,
+                        request,
                         "Division by zero is not allowed"
                     );
                     _repository.Save(errorEntity);
-
                     return DivisionResponse.ErrorResponse("Division by zero is not allowed");
                 }
                 catch (NotSupportedException ex)
                 {
                     _logger.LogWarning(ex, "Unsupported division operation");
-                    var errorEntity = QuantityMeasurementEntity.CreateBinaryOperation(
-                        OperationType.Divide,
-                        request.Quantity1.Value,
-                        request.Quantity1.Unit,
-                        request.Quantity1.Category,
-                        request.Quantity2.Value,
-                        request.Quantity2.Unit,
-                        request.Quantity2.Category,
-                        null,
-                        null,
-                        null,
-                        null,
-                        false,
-                        ex.Message
-                    );
+                    var errorEntity = CreateErrorEntity(OperationType.Divide, request, ex.Message);
                     _repository.Save(errorEntity);
-
                     return DivisionResponse.ErrorResponse(ex.Message);
                 }
                 catch (Exception ex)
                 {
                     _logger.LogError(ex, "Error during division");
-                    var errorEntity = QuantityMeasurementEntity.CreateBinaryOperation(
-                        OperationType.Divide,
-                        request.Quantity1.Value,
-                        request.Quantity1.Unit,
-                        request.Quantity1.Category,
-                        request.Quantity2.Value,
-                        request.Quantity2.Unit,
-                        request.Quantity2.Category,
-                        null,
-                        null,
-                        null,
-                        null,
-                        false,
-                        ex.Message
-                    );
-                    _repository.Save(errorEntity);
-
-                    return DivisionResponse.ErrorResponse($"Division error: {ex.Message}");
+                    var quantityEx = new QuantityMeasurementException(
+                        $"Division error: {ex.Message}",
+                        ex
+                    )
+                    {
+                        OperationType = "Divide",
+                    };
+                    throw quantityEx;
                 }
             });
-        }
-
-        #endregion
-
-        #region Batch Operations
-
-        public async Task<BatchResponse<QuantityResponse>> CompareQuantitiesBatchAsync(
-            BatchBinaryRequest request
-        )
-        {
-            return await Task.Run(async () =>
-            {
-                var results = new List<QuantityResponse>();
-                int successCount = 0;
-                int failureCount = 0;
-
-                foreach (var item in request.Requests)
-                {
-                    try
-                    {
-                        var result = await CompareQuantitiesAsync(item);
-                        results.Add(result);
-                        if (result.Success)
-                            successCount++;
-                        else
-                            failureCount++;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error in batch compare operation");
-                        results.Add(
-                            QuantityResponse.ErrorResponse(
-                                $"Batch item error: {ex.Message}",
-                                OperationType.Compare,
-                                500
-                            )
-                        );
-                        failureCount++;
-                    }
-                }
-
-                var batchResponse = new BatchResponse<QuantityResponse>
-                {
-                    Success = failureCount == 0,
-                    Message =
-                        failureCount == 0
-                            ? "All operations completed successfully"
-                            : $"{failureCount} operation(s) failed",
-                    Results = results,
-                    SuccessCount = successCount,
-                    FailureCount = failureCount,
-                    Timestamp = DateTime.UtcNow,
-                };
-
-                await CacheOperationResult("CompareBatch", request, batchResponse);
-
-                return batchResponse;
-            });
-        }
-
-        public async Task<BatchResponse<QuantityResponse>> ConvertQuantitiesBatchAsync(
-            BatchConversionRequest request
-        )
-        {
-            return await Task.Run(async () =>
-            {
-                var results = new List<QuantityResponse>();
-                int successCount = 0;
-                int failureCount = 0;
-
-                foreach (var item in request.Requests)
-                {
-                    try
-                    {
-                        var result = await ConvertQuantityAsync(item);
-                        results.Add(result);
-                        if (result.Success)
-                            successCount++;
-                        else
-                            failureCount++;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error in batch convert operation");
-                        results.Add(
-                            QuantityResponse.ErrorResponse(
-                                $"Batch item error: {ex.Message}",
-                                OperationType.Convert,
-                                500
-                            )
-                        );
-                        failureCount++;
-                    }
-                }
-
-                var batchResponse = new BatchResponse<QuantityResponse>
-                {
-                    Success = failureCount == 0,
-                    Message =
-                        failureCount == 0
-                            ? "All operations completed successfully"
-                            : $"{failureCount} operation(s) failed",
-                    Results = results,
-                    SuccessCount = successCount,
-                    FailureCount = failureCount,
-                    Timestamp = DateTime.UtcNow,
-                };
-
-                await CacheOperationResult("ConvertBatch", request, batchResponse);
-
-                return batchResponse;
-            });
-        }
-
-        public async Task<BatchResponse<QuantityResponse>> AddQuantitiesBatchAsync(
-            BatchBinaryRequest request
-        )
-        {
-            return await Task.Run(async () =>
-            {
-                var results = new List<QuantityResponse>();
-                int successCount = 0;
-                int failureCount = 0;
-
-                foreach (var item in request.Requests)
-                {
-                    try
-                    {
-                        var result = await AddQuantitiesAsync(item);
-                        results.Add(result);
-                        if (result.Success)
-                            successCount++;
-                        else
-                            failureCount++;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error in batch add operation");
-                        results.Add(
-                            QuantityResponse.ErrorResponse(
-                                $"Batch item error: {ex.Message}",
-                                OperationType.Add,
-                                500
-                            )
-                        );
-                        failureCount++;
-                    }
-                }
-
-                var batchResponse = new BatchResponse<QuantityResponse>
-                {
-                    Success = failureCount == 0,
-                    Message =
-                        failureCount == 0
-                            ? "All operations completed successfully"
-                            : $"{failureCount} operation(s) failed",
-                    Results = results,
-                    SuccessCount = successCount,
-                    FailureCount = failureCount,
-                    Timestamp = DateTime.UtcNow,
-                };
-
-                await CacheOperationResult("AddBatch", request, batchResponse);
-
-                return batchResponse;
-            });
-        }
-
-        public async Task<BatchResponse<QuantityResponse>> SubtractQuantitiesBatchAsync(
-            BatchBinaryRequest request
-        )
-        {
-            return await Task.Run(async () =>
-            {
-                var results = new List<QuantityResponse>();
-                int successCount = 0;
-                int failureCount = 0;
-
-                foreach (var item in request.Requests)
-                {
-                    try
-                    {
-                        var result = await SubtractQuantitiesAsync(item);
-                        results.Add(result);
-                        if (result.Success)
-                            successCount++;
-                        else
-                            failureCount++;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error in batch subtract operation");
-                        results.Add(
-                            QuantityResponse.ErrorResponse(
-                                $"Batch item error: {ex.Message}",
-                                OperationType.Subtract,
-                                500
-                            )
-                        );
-                        failureCount++;
-                    }
-                }
-
-                var batchResponse = new BatchResponse<QuantityResponse>
-                {
-                    Success = failureCount == 0,
-                    Message =
-                        failureCount == 0
-                            ? "All operations completed successfully"
-                            : $"{failureCount} operation(s) failed",
-                    Results = results,
-                    SuccessCount = successCount,
-                    FailureCount = failureCount,
-                    Timestamp = DateTime.UtcNow,
-                };
-
-                await CacheOperationResult("SubtractBatch", request, batchResponse);
-
-                return batchResponse;
-            });
-        }
-
-        public async Task<BatchResponse<DivisionResponse>> DivideQuantitiesBatchAsync(
-            BatchBinaryRequest request
-        )
-        {
-            return await Task.Run(async () =>
-            {
-                var results = new List<DivisionResponse>();
-                int successCount = 0;
-                int failureCount = 0;
-
-                foreach (var item in request.Requests)
-                {
-                    try
-                    {
-                        var result = await DivideQuantitiesAsync(item);
-                        results.Add(result);
-                        if (result.Success)
-                            successCount++;
-                        else
-                            failureCount++;
-                    }
-                    catch (Exception ex)
-                    {
-                        _logger.LogError(ex, "Error in batch divide operation");
-                        results.Add(
-                            DivisionResponse.ErrorResponse($"Batch item error: {ex.Message}")
-                        );
-                        failureCount++;
-                    }
-                }
-
-                var batchResponse = new BatchResponse<DivisionResponse>
-                {
-                    Success = failureCount == 0,
-                    Message =
-                        failureCount == 0
-                            ? "All operations completed successfully"
-                            : $"{failureCount} operation(s) failed",
-                    Results = results,
-                    SuccessCount = successCount,
-                    FailureCount = failureCount,
-                    Timestamp = DateTime.UtcNow,
-                };
-
-                await CacheOperationResult("DivideBatch", request, batchResponse);
-
-                return batchResponse;
-            });
-        }
-
-        #endregion
-
-        #region Cache Management Methods
-
-        public async Task<bool> ClearCacheAsync()
-        {
-            try
-            {
-                await _cacheRepository.ClearAllAsync();
-                _logger.LogInformation("Cache cleared successfully");
-                return true;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error clearing cache");
-                return false;
-            }
-        }
-
-        public async Task<CacheStatsResponse> GetCacheStatisticsAsync()
-        {
-            try
-            {
-                var isConnected = await _cacheRepository.IsConnectedAsync();
-                var allItems = await _cacheRepository.GetAllAsync();
-
-                return new CacheStatsResponse
-                {
-                    IsRedisConnected = isConnected,
-                    CacheItemCount = allItems?.Count ?? 0,
-                    Timestamp = DateTime.UtcNow,
-                };
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error getting cache stats");
-                return new CacheStatsResponse
-                {
-                    IsRedisConnected = false,
-                    CacheItemCount = 0,
-                    Timestamp = DateTime.UtcNow,
-                };
-            }
         }
 
         #endregion
