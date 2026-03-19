@@ -1,0 +1,25 @@
+2026-03-16 12:30:12.967 +05:30 [INF] Starting Quantity Measurement API
+2026-03-16 12:30:13.965 +05:30 [INF] Executed DbCommand (19ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-03-16 12:30:14.004 +05:30 [INF] Executed DbCommand (18ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2026-03-16 12:30:14.011 +05:30 [INF] Executed DbCommand (2ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT 1
+2026-03-16 12:30:14.016 +05:30 [INF] Executed DbCommand (1ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT OBJECT_ID(N'[__EFMigrationsHistory]');
+2026-03-16 12:30:14.068 +05:30 [INF] Executed DbCommand (25ms) [Parameters=[], CommandType='"Text"', CommandTimeout='30']
+SELECT [MigrationId], [ProductVersion]
+FROM [__EFMigrationsHistory]
+ORDER BY [MigrationId];
+2026-03-16 12:30:14.099 +05:30 [INF] No migrations were applied. The database is already up to date.
+2026-03-16 12:30:14.103 +05:30 [INF] Database migrated successfully
+2026-03-16 12:30:14.260 +05:30 [INF] Quantity Measurement API started successfully
+2026-03-16 12:30:14.444 +05:30 [INF] Now listening on: http://localhost:5000
+2026-03-16 12:30:14.445 +05:30 [INF] Now listening on: https://localhost:5001
+2026-03-16 12:30:14.446 +05:30 [INF] Application started. Press Ctrl+C to shut down.
+2026-03-16 12:30:14.448 +05:30 [INF] Hosting environment: Development
+2026-03-16 12:30:14.449 +05:30 [INF] Content root path: C:\QuantityMeasurementApp\QuantityMeasurementApp\QuantityMeasurementWebAPI
+2026-03-16 12:41:41.685 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/index.html - null null
+2026-03-16 12:41:41.851 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/index.html - 200 null text/html;charset=utf-8 170.1381ms
+2026-03-16 12:41:42.059 +05:30 [INF] Request starting HTTP/1.1 GET http://localhost:5000/swagger/v1/swagger.json - null null
+2026-03-16 12:41:42.235 +05:30 [INF] Request finished HTTP/1.1 GET http://localhost:5000/swagger/v1/swagger.json - 200 null application/json;charset=utf-8 176.2693ms
