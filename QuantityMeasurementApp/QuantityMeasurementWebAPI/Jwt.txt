@@ -1,0 +1,5 @@
+cd C:\QuantityMeasurementApp\QuantityMeasurementApp\QuantityMeasurementWebAPI
+dotnet user-secrets init
+dotnet user-secrets set "Jwt:Key" "YourSuperSecretKeyForJWTTokenGenerationThatShouldBeAtLeast32CharactersLong"
+dotnet user-secrets set "Jwt:Issuer" "QuantityMeasurementAPI"
+dotnet user-secrets set "Jwt:Audience" "QuantityMeasurementClient"
