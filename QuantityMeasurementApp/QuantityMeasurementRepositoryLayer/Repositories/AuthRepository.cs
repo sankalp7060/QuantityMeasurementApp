@@ -63,6 +63,11 @@ namespace QuantityMeasurementRepositoryLayer.Repositories
                 .AnyAsync(u => u.Username == username || u.Email == email);
         }
 
+        public async Task<int> GetTotalUserCountAsync()
+        {
+            return await _context.Set<UserEntity>().CountAsync();
+        }
+
         public async Task<RefreshTokenEntity> CreateRefreshTokenAsync(
             RefreshTokenEntity refreshToken
         )

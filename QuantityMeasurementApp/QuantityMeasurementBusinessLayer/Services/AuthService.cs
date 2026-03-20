@@ -12,32 +12,27 @@ using QuantityMeasurementRepositoryLayer.Interface;
 
 namespace QuantityMeasurementBusinessLayer.Services
 {
-    /// <summary>
-    /// Service implementation for authentication operations
-    /// Uses BCrypt for password hashing which automatically handles salting
-    /// Implements account lockout and secure token management
-    /// </summary>
     public class AuthService : IAuthService
     {
         private readonly IAuthRepository _authRepository;
         private readonly IConfiguration _configuration;
         private readonly ILogger<AuthService> _logger;
+        private readonly IAuditLogService _auditLogService;
 
-        // Maximum number of failed login attempts before lockout
         private const int MAX_FAILED_ATTEMPTS = 5;
-
-        // Lockout duration in minutes
         private const int LOCKOUT_MINUTES = 15;
 
         public AuthService(
             IAuthRepository authRepository,
             IConfiguration configuration,
-            ILogger<AuthService> logger
+            ILogger<AuthService> logger,
+            IAuditLogService auditLogService
         )
         {
             _authRepository = authRepository;
             _configuration = configuration;
             _logger = logger;
+            _auditLogService = auditLogService;
         }
 
         /// <summary>
@@ -82,8 +77,8 @@ namespace QuantityMeasurementBusinessLayer.Services
                     Username = request.Username,
                     Email = request.Email,
                     PasswordHash = passwordHash, // BCrypt hash already contains the salt
-                    FirstName = request.FirstName,
-                    LastName = request.LastName,
+                    FirstName = request.FirstName!,
+                    LastName = request.LastName!,
                     CreatedAt = DateTime.UtcNow,
                     IsActive = true,
                     Role = "User",
@@ -93,6 +88,15 @@ namespace QuantityMeasurementBusinessLayer.Services
 
                 // Save user to database
                 var createdUser = await _authRepository.CreateUserAsync(user);
+
+                await _auditLogService.LogAsync(
+                    createdUser.Id.ToString(),
+                    createdUser.Username,
+                    "Register",
+                    "User",
+                    $"User registered with email: {createdUser.Email}",
+                    ipAddress
+                );
 
                 // Generate JWT tokens for immediate login after registration
                 var (accessToken, expiresAt) = GenerateJwtToken(createdUser);
@@ -158,6 +162,17 @@ namespace QuantityMeasurementBusinessLayer.Services
                     // Add a small delay to prevent timing attacks
                     await Task.Delay(500);
 
+                    await _auditLogService.LogAsync(
+                        user?.Id.ToString() ?? "unknown",
+                        user?.Username ?? "unknown",
+                        "Login",
+                        "User",
+                        "Failed login attempt",
+                        ipAddress,
+                        false,
+                        "Invalid credentials"
+                    );
+
                     return new AuthResponseDto
                     {
                         Success = false,
@@ -213,6 +228,17 @@ namespace QuantityMeasurementBusinessLayer.Services
                     // Add a small delay to prevent timing attacks
                     await Task.Delay(500);
 
+                    await _auditLogService.LogAsync(
+                        user?.Id.ToString() ?? "unknown",
+                        user?.Username ?? "unknown",
+                        "Login",
+                        "User",
+                        "Failed login attempt",
+                        ipAddress,
+                        false,
+                        "Invalid credentials"
+                    );
+
                     return new AuthResponseDto
                     {
                         Success = false,
@@ -246,6 +272,15 @@ namespace QuantityMeasurementBusinessLayer.Services
 
                 // Save new refresh token
                 await SaveRefreshTokenAsync(user.Id, refreshToken, ipAddress);
+
+                await _auditLogService.LogAsync(
+                    user.Id.ToString(),
+                    user.Username,
+                    "Login",
+                    "User",
+                    "User logged in successfully",
+                    ipAddress
+                );
 
                 _logger.LogInformation("User logged in successfully: {Username}", user.Username);
 
