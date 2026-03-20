@@ -25,6 +25,7 @@ namespace QuantityMeasurementRepositoryLayer.Data
         /// Refresh tokens table for authentication
         /// </summary>
         public DbSet<RefreshTokenEntity> RefreshTokens { get; set; }
+        public DbSet<AuditLogEntity> AuditLogs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -143,6 +144,19 @@ namespace QuantityMeasurementRepositoryLayer.Data
                 entity.HasIndex(e => e.UserId).HasDatabaseName("IX_RefreshTokens_UserId");
                 entity.HasIndex(e => e.ExpiresAt).HasDatabaseName("IX_RefreshTokens_ExpiresAt");
                 entity.HasIndex(e => e.RevokedAt).HasDatabaseName("IX_RefreshTokens_RevokedAt");
+            });
+            // Configure AuditLogEntity
+            modelBuilder.Entity<AuditLogEntity>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.Property(e => e.UserId).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Username).HasMaxLength(100);
+                entity.Property(e => e.Action).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.Entity).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.IpAddress).IsRequired().HasMaxLength(50);
+                entity.HasIndex(e => e.UserId).HasDatabaseName("IX_AuditLogs_UserId");
+                entity.HasIndex(e => e.Timestamp).HasDatabaseName("IX_AuditLogs_Timestamp");
+                entity.HasIndex(e => e.Action).HasDatabaseName("IX_AuditLogs_Action");
             });
         }
     }

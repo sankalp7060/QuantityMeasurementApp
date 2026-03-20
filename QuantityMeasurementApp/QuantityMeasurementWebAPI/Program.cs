@@ -1,6 +1,10 @@
 // Import required namespaces for Entity Framework, business layer, repository layer, WebAPI extensions, and logging
+using System.Security.Claims;
 using System.Text;
+using AspNetCoreRateLimit;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using QuantityMeasurementBusinessLayer.Interface;
@@ -75,11 +79,20 @@ try
 
     // ==================== SERVICE REGISTRATION (DI Container) ====================
 
-    // Add MVC controller services to the dependency injection container
+    // Add MVC controller services
     builder.Services.AddControllers();
-
-    // Add API Explorer for Swagger to discover API endpoints
     builder.Services.AddEndpointsApiExplorer();
+
+    // Add Data Protection
+    var dataProtectionBuilder = builder
+        .Services.AddDataProtection()
+        .SetApplicationName("QuantityMeasurementApp");
+
+    // DPAPI is supported only on Windows
+    if (OperatingSystem.IsWindows())
+    {
+        dataProtectionBuilder.ProtectKeysWithDpapi();
+    }
 
     // ==================== DATABASE CONTEXT REGISTRATION ====================
     // Configure Database Context with DI (Scoped lifetime)
@@ -119,54 +132,50 @@ try
     builder.Services.AddScoped<IAuthRepository, AuthRepository>();
     builder.Services.AddScoped<IAuthService, AuthService>();
 
-    // Add JWT Authentication with enhanced security settings
+    // ==================== ADDITIONAL SERVICE REGISTRATIONS ====================
+    builder.Services.AddScoped<IAuditLogService, AuditLogService>();
+    builder.Services.AddScoped<IEncryptionService, EncryptionService>();
+
+    // Add rate limiting configuration
+    builder.Services.AddMemoryCache();
+    builder.Services.Configure<IpRateLimitOptions>(
+        builder.Configuration.GetSection("IpRateLimiting")
+    );
+    builder.Services.AddInMemoryRateLimiting();
+    builder.Services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+    builder.Services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+
+    // ==================== AUTHENTICATION CONFIGURATION ====================
     builder
         .Services.AddAuthentication(options =>
         {
             options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
             options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+            options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
         })
         .AddJwtBearer(options =>
         {
             options.TokenValidationParameters = new TokenValidationParameters
             {
-                // Validate the token issuer
                 ValidateIssuer = true,
                 ValidIssuer = builder.Configuration["Jwt:Issuer"],
-
-                // Validate the token audience
                 ValidateAudience = true,
                 ValidAudience = builder.Configuration["Jwt:Audience"],
-
-                // Validate the token expiration
                 ValidateLifetime = true,
-
-                // Validate the signature
                 ValidateIssuerSigningKey = true,
-
-                // The signing key to use
                 IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-
-                // Eliminate clock skew for stricter validation
                 ClockSkew = TimeSpan.Zero,
-
-                // Require expiration time to be present
                 RequireExpirationTime = true,
-
-                // Save the token in the authentication properties
                 SaveSigninToken = true,
             };
 
-            // Add events for debugging and security monitoring
             options.Events = new JwtBearerEvents
             {
-                // Log authentication failures for security monitoring
                 OnAuthenticationFailed = context =>
                 {
                     var logger = context.HttpContext.RequestServices.GetRequiredService<
                         ILogger<Program>
                     >();
-
                     if (context.Exception is SecurityTokenExpiredException)
                     {
                         logger.LogWarning("Authentication failed - Token expired");
@@ -179,11 +188,8 @@ try
                     {
                         logger.LogError(context.Exception, "Authentication failed");
                     }
-
                     return Task.CompletedTask;
                 },
-
-                // Log successful token validation
                 OnTokenValidated = context =>
                 {
                     var logger = context.HttpContext.RequestServices.GetRequiredService<
@@ -191,58 +197,48 @@ try
                     >();
                     var userId = context.Principal?.FindFirst("sub")?.Value;
                     var username = context.Principal?.Identity?.Name;
-
                     logger.LogInformation(
                         "Token validated successfully for user: {Username} (ID: {UserId})",
                         username,
                         userId
                     );
-
                     return Task.CompletedTask;
                 },
-
-                // Handle authorization challenges
                 OnChallenge = context =>
                 {
                     var logger = context.HttpContext.RequestServices.GetRequiredService<
                         ILogger<Program>
                     >();
-
-                    // Skip if the response has already started
                     if (context.Response.HasStarted)
-                    {
                         return Task.CompletedTask;
-                    }
-
                     logger.LogWarning(
                         "Authorization challenge for path: {Path}, Error: {Error}",
                         context.Request.Path,
                         context.Error
                     );
-
                     return Task.CompletedTask;
                 },
-
-                // Handle message received (can be used for additional validation)
-                OnMessageReceived = context =>
-                {
-                    // You can read the token from cookies if needed
-                    // var token = context.Request.Cookies["accessToken"];
-                    // if (!string.IsNullOrEmpty(token))
-                    // {
-                    //     context.Token = token;
-                    // }
-
-                    return Task.CompletedTask;
-                },
+                OnMessageReceived = context => Task.CompletedTask,
             };
-        });
+        })
+        .AddCookie(
+            CookieAuthenticationDefaults.AuthenticationScheme,
+            options =>
+            {
+                options.Cookie.HttpOnly = true;
+                options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Change to None for HTTP
+                options.Cookie.SameSite = SameSiteMode.Lax;
+                options.Cookie.Name = "AuthCookie";
+                options.Cookie.Path = "/";
+                options.ExpireTimeSpan = TimeSpan.FromMinutes(30);
+                options.SlidingExpiration = true;
+            }
+        );
 
-    // Add authorization policies if needed
+    // Add authorization policies
     builder.Services.AddAuthorization(options =>
     {
         options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
-
         options.AddPolicy("RequireUserRole", policy => policy.RequireRole("User", "Admin"));
     });
 
@@ -255,10 +251,10 @@ try
             policy =>
             {
                 policy
-                    .WithOrigins("http://localhost:3001") // Your React app URL
+                    .WithOrigins("http://localhost:3001", "http://localhost:3000")
                     .AllowAnyMethod()
                     .AllowAnyHeader()
-                    .AllowCredentials(); // Important for cookies/auth
+                    .AllowCredentials();
             }
         );
     });
@@ -273,27 +269,19 @@ try
 
     // ==================== DATABASE MIGRATION ON STARTUP ====================
     // Ensure database is created and migrations are applied automatically
-    // This creates a scope to resolve scoped services (DbContext)
     using (var scope = app.Services.CreateScope())
     {
-        // Get required services from the scope
         var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
         var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
 
         try
         {
-            // Apply any pending migrations to the database
-            // This will create the database if it doesn't exist and apply all migrations
             dbContext.Database.Migrate();
             logger.LogInformation("Database migrated successfully");
         }
         catch (Exception ex)
         {
-            // Log error if migration fails
             logger.LogError(ex, "An error occurred while migrating the database");
-
-            // Fallback: Try to create database without migrations
-            // This ensures the database exists even if migration fails
             dbContext.Database.EnsureCreated();
             logger.LogInformation("Database created using EnsureCreated");
         }
@@ -305,20 +293,20 @@ try
     // 1. Global exception handling middleware (must be first)
     app.UseMiddleware<GlobalExceptionHandler>();
 
+    // Add security headers middleware after exception handling
+    app.UseMiddleware<SecurityHeadersMiddleware>();
+
     // 2. Add rate limiting middleware to prevent brute force attacks
     app.UseMiddleware<RateLimitingMiddleware>();
 
     // 3. Swagger in Development (before auth)
     if (app.Environment.IsDevelopment())
     {
-        // Enable Swagger middleware for API documentation
         app.UseSwagger();
-        // Configure Swagger UI
         app.UseSwaggerUI(c =>
         {
-            // Point to the Swagger JSON endpoint
             c.SwaggerEndpoint("/swagger/v1/swagger.json", "Quantity Measurement API v1");
-            c.RoutePrefix = string.Empty; // Serve Swagger UI at root URL (https://localhost:xxxx/)
+            c.RoutePrefix = string.Empty;
         });
     }
 
@@ -332,10 +320,10 @@ try
     }
 
     // 6. CORS (should be before Authentication)
-    app.UseCors("AllowReactApp"); // Use the policy name you defined
+    app.UseCors("AllowReactApp");
 
     // 7. Authentication MUST come before Authorization
-    app.UseAuthentication(); // <-- THIS IS CRITICAL - verifies the JWT token
+    app.UseAuthentication();
 
     // 8. Authorization checks the [Authorize] attributes
     app.UseAuthorization();
@@ -365,6 +353,5 @@ catch (Exception ex)
 finally
 {
     // Ensure all logs are written before application exits
-    // This is important for the final log messages to be written
     Log.CloseAndFlush();
 }

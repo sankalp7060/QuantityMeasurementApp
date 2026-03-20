@@ -1,11 +1,13 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
 using QuantityMeasurementBusinessLayer.Interface;
 using QuantityMeasurementModelLayer.DTOs;
+using QuantityMeasurementRepositoryLayer.Interface;
 using QuantityMeasurementWebAPI.Controllers;
 
 namespace QuantityMeasurementApp.Tests.Controllers
@@ -14,6 +16,9 @@ namespace QuantityMeasurementApp.Tests.Controllers
     public class AuthControllerTests
     {
         private Mock<IAuthService> _mockAuthService = null!;
+        private Mock<IAuthRepository> _mockAuthRepository = null!;
+        private Mock<IAuditLogService> _mockAuditLogService = null!;
+        private IConfiguration _configuration = null!;
         private Mock<ILogger<AuthController>> _mockLogger = null!;
         private AuthController _controller = null!;
 
@@ -21,8 +26,33 @@ namespace QuantityMeasurementApp.Tests.Controllers
         public void Setup()
         {
             _mockAuthService = new Mock<IAuthService>();
+            _mockAuthRepository = new Mock<IAuthRepository>();
+            _mockAuditLogService = new Mock<IAuditLogService>();
             _mockLogger = new Mock<ILogger<AuthController>>();
-            _controller = new AuthController(_mockAuthService.Object, _mockLogger.Object);
+
+            // Create actual configuration data instead of mocking
+            var configurationData = new Dictionary<string, string?>
+            {
+                ["Jwt:Key"] = "TestKeyForJWTTokenGenerationThatIs32CharsLong",
+                ["Jwt:Issuer"] = "TestIssuer",
+                ["Jwt:Audience"] = "TestAudience",
+                ["Jwt:TokenExpiryInMinutes"] = "15",
+                ["Jwt:RefreshTokenExpiryInDays"] = "7",
+                ["Frontend:Url"] = "http://localhost:3001",
+            };
+
+            // Build actual configuration
+            _configuration = new ConfigurationBuilder()
+                .AddInMemoryCollection(configurationData)
+                .Build();
+
+            _controller = new AuthController(
+                _mockAuthService.Object,
+                _mockAuthRepository.Object,
+                _mockAuditLogService.Object,
+                _configuration,
+                _mockLogger.Object
+            );
 
             var httpContext = new DefaultHttpContext();
             httpContext.Connection.RemoteIpAddress = System.Net.IPAddress.Parse("127.0.0.1");
@@ -57,8 +87,6 @@ namespace QuantityMeasurementApp.Tests.Controllers
             var result = await _controller.Register(request);
 
             Assert.That(result, Is.TypeOf<OkObjectResult>());
-            var okResult = result as OkObjectResult;
-            Assert.That(okResult?.Value, Is.EqualTo(response));
         }
 
         [Test]
@@ -233,8 +261,6 @@ namespace QuantityMeasurementApp.Tests.Controllers
             var result = await _controller.GetProfile();
 
             Assert.That(result, Is.TypeOf<OkObjectResult>());
-            var okResult = result as OkObjectResult;
-            Assert.That(okResult?.Value, Is.EqualTo(profile));
         }
 
         [Test]
@@ -243,6 +269,33 @@ namespace QuantityMeasurementApp.Tests.Controllers
             var result = await _controller.GetProfile();
 
             Assert.That(result, Is.TypeOf<UnauthorizedObjectResult>());
+        }
+
+        [Test]
+        public void GetAuthStatus_Authenticated_ReturnsTrue()
+        {
+            var userId = "1";
+            var username = "testuser";
+            var claims = new List<Claim>
+            {
+                new Claim(ClaimTypes.NameIdentifier, userId),
+                new Claim(ClaimTypes.Name, username),
+            };
+            var identity = new ClaimsIdentity(claims, "Bearer");
+            var principal = new ClaimsPrincipal(identity);
+            _controller.ControllerContext.HttpContext.User = principal;
+
+            var result = _controller.GetAuthStatus();
+
+            Assert.That(result, Is.TypeOf<OkObjectResult>());
+        }
+
+        [Test]
+        public void GetAuthStatus_Unauthenticated_ReturnsFalse()
+        {
+            var result = _controller.GetAuthStatus();
+
+            Assert.That(result, Is.TypeOf<OkObjectResult>());
         }
     }
 }

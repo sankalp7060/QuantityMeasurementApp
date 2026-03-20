@@ -2,6 +2,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Moq;
 using NUnit.Framework;
+using QuantityMeasurementBusinessLayer.Interface;
 using QuantityMeasurementBusinessLayer.Services;
 using QuantityMeasurementModelLayer.DTOs;
 using QuantityMeasurementModelLayer.Entities;
@@ -15,6 +16,7 @@ namespace QuantityMeasurementApp.Tests.Services
         private Mock<IAuthRepository> _mockAuthRepository = null!;
         private IConfiguration _configuration = null!;
         private Mock<ILogger<AuthService>> _mockLogger = null!;
+        private Mock<IAuditLogService> _mockAuditLogService = null!;
         private AuthService _authService = null!;
 
         [SetUp]
@@ -22,6 +24,7 @@ namespace QuantityMeasurementApp.Tests.Services
         {
             _mockAuthRepository = new Mock<IAuthRepository>();
             _mockLogger = new Mock<ILogger<AuthService>>();
+            _mockAuditLogService = new Mock<IAuditLogService>();
 
             // Create actual configuration data instead of mocking extension methods
             var configurationData = new Dictionary<string, string?>
@@ -42,7 +45,8 @@ namespace QuantityMeasurementApp.Tests.Services
             _authService = new AuthService(
                 _mockAuthRepository.Object,
                 _configuration,
-                _mockLogger.Object
+                _mockLogger.Object,
+                _mockAuditLogService.Object // Add the missing parameter
             );
         }
 

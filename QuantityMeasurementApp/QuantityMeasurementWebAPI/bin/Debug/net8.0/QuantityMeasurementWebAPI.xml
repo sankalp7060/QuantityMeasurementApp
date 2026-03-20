@@ -1,0 +1,207 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>QuantityMeasurementWebAPI</name>
+    </assembly>
+    <members>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.AdminController.GetAllUsers">
+            <summary>
+            Get all users (Admin only)
+            </summary>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.AdminController.GetUserById(System.Int64)">
+            <summary>
+            Get user by ID (Admin only)
+            </summary>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.AdminController.UpdateUserRole(System.Int64,QuantityMeasurementWebAPI.Controllers.UpdateRoleRequest)">
+            <summary>
+            Update user role (Admin only)
+            </summary>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.AdminController.UpdateUserStatus(System.Int64,QuantityMeasurementWebAPI.Controllers.UpdateStatusRequest)">
+            <summary>
+            Activate/Deactivate user (Admin only)
+            </summary>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.AdminController.UnlockUser(System.Int64)">
+            <summary>
+            Unlock user account (Admin only)
+            </summary>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.AdminController.GetAuditLogs(System.String,System.Nullable{System.DateTime},System.Nullable{System.DateTime})">
+            <summary>
+            Get audit logs (Admin only)
+            </summary>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.AdminController.GetUserStatistics">
+            <summary>
+            Get user statistics (Admin only)
+            </summary>
+        </member>
+        <member name="T:QuantityMeasurementWebAPI.Controllers.QuantitiesController">
+            <summary>
+            Controller for quantity measurement operations
+            This controller handles all HTTP requests related to quantity measurements
+            </summary>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.QuantitiesController.#ctor(QuantityMeasurementBusinessLayer.Interface.IQuantityMeasurementService,Microsoft.Extensions.Logging.ILogger{QuantityMeasurementWebAPI.Controllers.QuantitiesController})">
+            <summary>
+            Initializes a new instance of the QuantitiesController
+            Constructor that receives dependencies through Dependency Injection
+            </summary>
+            <param name="quantityService">Quantity measurement service</param>
+            <param name="logger">Logger instance</param>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.QuantitiesController.CompareQuantities(QuantityMeasurementModelLayer.DTOs.BinaryOperationRequestDto)">
+            <summary>
+            Compares two quantities for equality
+            HTTP POST endpoint that accepts JSON body with two quantities to compare
+            </summary>
+            <param name="request">The quantities to compare (contained in request DTO)</param>
+            <returns>Comparison result indicating if quantities are equal</returns>
+            <response code="200">Returns the comparison result</response>
+            <response code="400">If the request is invalid or categories don't match</response>
+            <response code="500">If an internal server error occurs</response>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.QuantitiesController.ConvertQuantity(QuantityMeasurementModelLayer.DTOs.ConversionRequestDto)">
+            <summary>
+            Converts a quantity to a different unit
+            </summary>
+            <param name="request">The conversion request with source and target unit</param>
+            <returns>Converted quantity in target unit</returns>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.QuantitiesController.AddQuantities(QuantityMeasurementModelLayer.DTOs.BinaryOperationRequestDto)">
+            <summary>
+            Adds two quantities
+            </summary>
+            <param name="request">The quantities to add with optional target unit</param>
+            <returns>Sum of the two quantities</returns>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.QuantitiesController.SubtractQuantities(QuantityMeasurementModelLayer.DTOs.BinaryOperationRequestDto)">
+            <summary>
+            Subtracts one quantity from another
+            </summary>
+            <param name="request">The quantities to subtract (first - second) with optional target unit</param>
+            <returns>Difference between the two quantities</returns>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.QuantitiesController.DivideQuantities(QuantityMeasurementModelLayer.DTOs.BinaryOperationRequestDto)">
+            <summary>
+            Divides one quantity by another
+            </summary>
+            <param name="request">The quantities to divide (first ÷ second)</param>
+            <returns>Dimensionless ratio with interpretation</returns>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.QuantitiesController.GetHistory(System.Nullable{QuantityMeasurementModelLayer.DTOs.Enums.OperationType})">
+            <summary>
+            Gets operation history
+            </summary>
+            <param name="operation">Optional operation type filter (if null, returns all)</param>
+            <returns>List of measurement history records</returns>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.QuantitiesController.GetHistoryByCategory(System.String)">
+            <summary>
+            Gets history by category
+            </summary>
+            <param name="category">Category to filter by (LENGTH, WEIGHT, VOLUME, TEMPERATURE)</param>
+            <returns>List of measurement history records for the specified category</returns>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.QuantitiesController.GetHistoryByDateRange(System.DateTime,System.DateTime)">
+            <summary>
+            Gets history by date range
+            </summary>
+            <param name="startDate">Start date (yyyy-MM-dd)</param>
+            <param name="endDate">End date (yyyy-MM-dd)</param>
+            <returns>List of measurement history records within the date range</returns>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.QuantitiesController.GetErrorHistory">
+            <summary>
+            Gets error history
+            </summary>
+            <returns>List of failed operations</returns>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.QuantitiesController.GetStatistics">
+            <summary>
+            Gets operation statistics
+            </summary>
+            <returns>Statistics about operations (counts, success rates, etc.)</returns>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Controllers.QuantitiesController.GetOperationCount(QuantityMeasurementModelLayer.DTOs.Enums.OperationType)">
+            <summary>
+            Gets operation count for a specific operation type
+            </summary>
+            <param name="operation">Operation type (Compare, Convert, Add, etc.)</param>
+            <returns>Count of operations of that type</returns>
+        </member>
+        <member name="T:QuantityMeasurementWebAPI.Middleware.GlobalExceptionHandler">
+            <summary>
+            Global exception handling middleware
+            This middleware catches all unhandled exceptions and returns consistent error responses
+            </summary>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Middleware.GlobalExceptionHandler.#ctor(Microsoft.AspNetCore.Http.RequestDelegate,Microsoft.Extensions.Logging.ILogger{QuantityMeasurementWebAPI.Middleware.GlobalExceptionHandler})">
+            <summary>
+            Constructor for GlobalExceptionHandler
+            </summary>
+            <param name="next">Next middleware delegate (injected by framework)</param>
+            <param name="logger">Logger instance (injected by DI)</param>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Middleware.GlobalExceptionHandler.InvokeAsync(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Invoke method called by the middleware pipeline for each HTTP request
+            </summary>
+            <param name="context">Current HTTP context</param>
+            <returns>Task representing the asynchronous operation</returns>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Middleware.GlobalExceptionHandler.HandleExceptionAsync(Microsoft.AspNetCore.Http.HttpContext,System.Exception)">
+            <summary>
+            Handles exceptions by creating appropriate HTTP responses
+            </summary>
+            <param name="context">HTTP context</param>
+            <param name="exception">The exception that was thrown</param>
+            <returns>Task representing the response writing operation</returns>
+        </member>
+        <member name="T:QuantityMeasurementWebAPI.Middleware.RateLimitingMiddleware">
+            <summary>
+            Middleware for rate limiting to prevent brute force attacks
+            This middleware tracks requests by IP address and limits the number of requests
+            to the login endpoint within a specified time window
+            </summary>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Middleware.RateLimitingMiddleware.#ctor(Microsoft.AspNetCore.Http.RequestDelegate,Microsoft.Extensions.Logging.ILogger{QuantityMeasurementWebAPI.Middleware.RateLimitingMiddleware})">
+            <summary>
+            Initializes a new instance of the RateLimitingMiddleware
+            </summary>
+            <param name="next">Next middleware in the pipeline</param>
+            <param name="logger">Logger instance</param>
+        </member>
+        <member name="M:QuantityMeasurementWebAPI.Middleware.RateLimitingMiddleware.InvokeAsync(Microsoft.AspNetCore.Http.HttpContext)">
+            <summary>
+            Invokes the middleware for each HTTP request
+            </summary>
+            <param name="context">HTTP context</param>
+            <returns>Task representing the asynchronous operation</returns>
+        </member>
+        <member name="T:QuantityMeasurementWebAPI.Middleware.RateLimitingMiddleware.ClientRequestInfo">
+            <summary>
+            Helper class to track client request information
+            </summary>
+        </member>
+        <member name="P:QuantityMeasurementWebAPI.Middleware.RateLimitingMiddleware.ClientRequestInfo.RequestCount">
+            <summary>
+            Number of requests made in the current time window
+            </summary>
+        </member>
+        <member name="P:QuantityMeasurementWebAPI.Middleware.RateLimitingMiddleware.ClientRequestInfo.WindowStart">
+            <summary>
+            Start time of the current time window
+            </summary>
+        </member>
+        <member name="T:QuantityMeasurementWebAPI.Middleware.SecurityHeadersMiddleware">
+            <summary>
+            Middleware to add security headers to all HTTP responses
+            Implements OWASP recommended security headers
+            </summary>
+        </member>
+    </members>
+</doc>
