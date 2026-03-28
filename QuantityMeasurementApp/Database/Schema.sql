@@ -282,3 +282,13 @@ GO
 SELECT * FROM vw_MeasurementSummary;
 SELECT * FROM vw_UserSummary;
 GO
+
+SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES 
+WHERE TABLE_NAME IN ('QuantityMeasurements', 'Users', 'RefreshTokens', 'AuditLogs')
+ORDER BY TABLE_NAME;
+
+USE QuantityMeasurementDB;
+UPDATE Users SET Role = 'Admin' WHERE Email = 'sankalpagarwal8057@gmail.com';
+SELECT * FROM Users WHERE Email = 'sankalpagarwal8057@gmail.com';
+SELECT Id, Username, Email, Role, FirstName, LastName FROM Users;
+

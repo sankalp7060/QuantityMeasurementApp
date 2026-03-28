@@ -2,7 +2,6 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
@@ -20,21 +19,18 @@ namespace QuantityMeasurementWebAPI.Controllers
     {
         private readonly IAuthService _authService;
         private readonly IAuthRepository _authRepository;
-        private readonly IAuditLogService _auditLogService;
         private readonly IConfiguration _configuration;
         private readonly ILogger<AuthController> _logger;
 
         public AuthController(
             IAuthService authService,
             IAuthRepository authRepository,
-            IAuditLogService auditLogService,
             IConfiguration configuration,
             ILogger<AuthController> logger
         )
         {
             _authService = authService;
             _authRepository = authRepository;
-            _auditLogService = auditLogService;
             _configuration = configuration;
             _logger = logger;
         }
@@ -114,6 +110,40 @@ namespace QuantityMeasurementWebAPI.Controllers
             return Ok(result);
         }
 
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<IActionResult> GetProfile()
+        {
+            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (string.IsNullOrEmpty(userIdClaim))
+                return Unauthorized(new { Message = "User not authenticated" });
+
+            var profile = await _authService.GetUserProfileAsync(long.Parse(userIdClaim));
+            if (profile == null)
+                return NotFound(new { Message = "User not found" });
+
+            return Ok(profile);
+        }
+
+        [HttpGet("status")]
+        [AllowAnonymous]
+        public IActionResult GetAuthStatus()
+        {
+            var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
+            var username = User.Identity?.Name;
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+            return Ok(
+                new
+                {
+                    IsAuthenticated = isAuthenticated,
+                    Username = username,
+                    UserId = userId,
+                    Message = isAuthenticated ? "User is logged in" : "User is not logged in",
+                }
+            );
+        }
+
         // ==================== GOOGLE OAUTH ====================
 
         [HttpGet("google/login")]
@@ -148,14 +178,14 @@ namespace QuantityMeasurementWebAPI.Controllers
                 if (!string.IsNullOrEmpty(error))
                 {
                     _logger.LogError("Google returned error: {Error}", error);
-                    return BadRequest(new { success = false, message = $"Google error: {error}" });
+                    return Redirect(
+                        $"http://localhost:3000/login?error={Uri.EscapeDataString(error)}"
+                    );
                 }
 
                 if (string.IsNullOrEmpty(code))
                 {
-                    return BadRequest(
-                        new { success = false, message = "No authorization code received" }
-                    );
+                    return Redirect("http://localhost:3000/login?error=No authorization code");
                 }
 
                 _logger.LogInformation("Received Google auth code, exchanging for tokens...");
@@ -165,9 +195,7 @@ namespace QuantityMeasurementWebAPI.Controllers
 
                 if (tokenResponse == null)
                 {
-                    return BadRequest(
-                        new { success = false, message = "Failed to exchange code for tokens" }
-                    );
+                    return Redirect("http://localhost:3000/login?error=Failed to exchange code");
                 }
 
                 // Get user info from Google
@@ -175,9 +203,7 @@ namespace QuantityMeasurementWebAPI.Controllers
 
                 if (userInfo == null || string.IsNullOrEmpty(userInfo.email))
                 {
-                    return BadRequest(
-                        new { success = false, message = "Failed to get user info from Google" }
-                    );
+                    return Redirect("http://localhost:3000/login?error=Failed to get user info");
                 }
 
                 _logger.LogInformation("Google user: {Email}", userInfo.email);
@@ -199,15 +225,6 @@ namespace QuantityMeasurementWebAPI.Controllers
                         Role = "User",
                     };
                     user = await _authRepository.CreateUserAsync(user);
-
-                    // Check if this is the first user
-                    var userCount = await _authRepository.GetTotalUserCountAsync();
-                    if (userCount == 1)
-                    {
-                        user.Role = "Admin";
-                        await _authRepository.UpdateUserAsync(user);
-                        _logger.LogInformation("First user promoted to Admin: {Email}", user.Email);
-                    }
                 }
 
                 // Generate JWT tokens
@@ -217,16 +234,10 @@ namespace QuantityMeasurementWebAPI.Controllers
 
                 await SaveRefreshTokenAsync(user.Id, refreshToken, ipAddress);
 
-                // Return JSON with tokens
-                return Ok(
-                    new
-                    {
-                        success = true,
-                        message = "Google login successful",
-                        accessToken = accessToken,
-                        refreshToken = refreshToken,
-                        expiresAt = expiresAt,
-                        user = new
+                // Redirect to frontend with tokens in URL
+                var userJson = Uri.EscapeDataString(
+                    System.Text.Json.JsonSerializer.Serialize(
+                        new
                         {
                             user.Id,
                             user.Username,
@@ -234,27 +245,22 @@ namespace QuantityMeasurementWebAPI.Controllers
                             user.FirstName,
                             user.LastName,
                             user.Role,
-                        },
-                    }
+                        }
+                    )
+                );
+
+                return Redirect(
+                    $"http://localhost:3000/auth/callback?accessToken={accessToken}&refreshToken={refreshToken}&user={userJson}"
                 );
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Google callback error");
-                return StatusCode(500, new { success = false, message = ex.Message });
+                return Redirect("http://localhost:3000/login?error=Internal server error");
             }
         }
 
-        [HttpGet("google/error")]
-        [AllowAnonymous]
-        public IActionResult GoogleError([FromQuery] string message)
-        {
-            return BadRequest(
-                new { success = false, message = message ?? "Google authentication failed" }
-            );
-        }
-
-        #region Google Token Exchange Helpers
+        #region Helper Methods
 
         private async Task<GoogleTokenResponse?> ExchangeCodeForTokens(string code)
         {
@@ -328,44 +334,6 @@ namespace QuantityMeasurementWebAPI.Controllers
             public string picture { get; set; } = string.Empty;
         }
 
-        #endregion
-
-        [HttpGet("profile")]
-        [Authorize]
-        public async Task<IActionResult> GetProfile()
-        {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-            if (string.IsNullOrEmpty(userIdClaim))
-                return Unauthorized(new { Message = "User not authenticated" });
-
-            var profile = await _authService.GetUserProfileAsync(long.Parse(userIdClaim));
-            if (profile == null)
-                return NotFound(new { Message = "User not found" });
-
-            return Ok(profile);
-        }
-
-        [HttpGet("status")]
-        [AllowAnonymous]
-        public IActionResult GetAuthStatus()
-        {
-            var isAuthenticated = User.Identity?.IsAuthenticated ?? false;
-            var username = User.Identity?.Name;
-            var userId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
-            return Ok(
-                new
-                {
-                    IsAuthenticated = isAuthenticated,
-                    Username = username,
-                    UserId = userId,
-                    Message = isAuthenticated ? "User is logged in" : "User is not logged in",
-                }
-            );
-        }
-
-        #region Helper Methods
-
         private void SetRefreshTokenCookie(string? refreshToken, DateTime expires)
         {
             if (string.IsNullOrEmpty(refreshToken))
@@ -397,14 +365,12 @@ namespace QuantityMeasurementWebAPI.Controllers
                 {
                     var jsonDoc = System.Text.Json.JsonDocument.Parse(body);
                     if (jsonDoc.RootElement.TryGetProperty("refreshToken", out var tokenElement))
-                    {
                         return tokenElement.GetString();
-                    }
                 }
             }
             catch (Exception ex)
             {
-                _logger.LogDebug(ex, "Failed to extract refresh token from body");
+                _logger.LogDebug(ex, "Failed to extract refresh token");
             }
             return null;
         }

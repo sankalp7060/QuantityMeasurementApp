@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using QuantityMeasurementBusinessLayer.Interface; // Note: singular
+using QuantityMeasurementBusinessLayer.Interface;
 using QuantityMeasurementBusinessLayer.Services;
 
 namespace QuantityMeasurementBusinessLayer.Configuration

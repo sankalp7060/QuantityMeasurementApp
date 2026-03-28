@@ -17,7 +17,6 @@ namespace QuantityMeasurementApp.Tests.Controllers
     {
         private Mock<IAuthService> _mockAuthService = null!;
         private Mock<IAuthRepository> _mockAuthRepository = null!;
-        private Mock<IAuditLogService> _mockAuditLogService = null!;
         private IConfiguration _configuration = null!;
         private Mock<ILogger<AuthController>> _mockLogger = null!;
         private AuthController _controller = null!;
@@ -27,10 +26,9 @@ namespace QuantityMeasurementApp.Tests.Controllers
         {
             _mockAuthService = new Mock<IAuthService>();
             _mockAuthRepository = new Mock<IAuthRepository>();
-            _mockAuditLogService = new Mock<IAuditLogService>();
             _mockLogger = new Mock<ILogger<AuthController>>();
 
-            // Create actual configuration data instead of mocking
+            // Create real configuration instead of mocking
             var configurationData = new Dictionary<string, string?>
             {
                 ["Jwt:Key"] = "TestKeyForJWTTokenGenerationThatIs32CharsLong",
@@ -38,7 +36,9 @@ namespace QuantityMeasurementApp.Tests.Controllers
                 ["Jwt:Audience"] = "TestAudience",
                 ["Jwt:TokenExpiryInMinutes"] = "15",
                 ["Jwt:RefreshTokenExpiryInDays"] = "7",
-                ["Frontend:Url"] = "http://localhost:3001",
+                ["Authentication:Google:ClientId"] = "test-client-id",
+                ["Authentication:Google:ClientSecret"] = "test-client-secret",
+                ["Frontend:Url"] = "http://localhost:3000",
             };
 
             // Build actual configuration
@@ -49,7 +49,6 @@ namespace QuantityMeasurementApp.Tests.Controllers
             _controller = new AuthController(
                 _mockAuthService.Object,
                 _mockAuthRepository.Object,
-                _mockAuditLogService.Object,
                 _configuration,
                 _mockLogger.Object
             );
