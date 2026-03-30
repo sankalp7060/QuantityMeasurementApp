@@ -2,30 +2,28 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy solution file (located one level up from Dockerfile)
-COPY ../*.sln ./
-
-# Copy all project files from their correct locations
-COPY ../QuantityMeasurementWebAPI/QuantityMeasurementWebAPI.csproj ./QuantityMeasurementWebAPI/
-COPY ../QuantityMeasurementBusinessLayer/QuantityMeasurementBusinessLayer.csproj ./QuantityMeasurementBusinessLayer/
-COPY ../QuantityMeasurementRepositoryLayer/QuantityMeasurementRepositoryLayer.csproj ./QuantityMeasurementRepositoryLayer/
-COPY ../QuantityMeasurementModelLayer/QuantityMeasurementModelLayer.csproj ./QuantityMeasurementModelLayer/
+# Copy csproj files (they are in the build context root since we're in QuantityMeasurementWebAPI folder)
+COPY *.csproj ./
+COPY ../QuantityMeasurementBusinessLayer/*.csproj ./QuantityMeasurementBusinessLayer/
+COPY ../QuantityMeasurementRepositoryLayer/*.csproj ./QuantityMeasurementRepositoryLayer/
+COPY ../QuantityMeasurementModelLayer/*.csproj ./QuantityMeasurementModelLayer/
 
 # Restore dependencies
-RUN dotnet restore "QuantityMeasurementWebAPI/QuantityMeasurementWebAPI.csproj"
+RUN dotnet restore
 
 # Copy everything else
-COPY .. .
+COPY . .
+COPY ../QuantityMeasurementBusinessLayer ./QuantityMeasurementBusinessLayer
+COPY ../QuantityMeasurementRepositoryLayer ./QuantityMeasurementRepositoryLayer
+COPY ../QuantityMeasurementModelLayer ./QuantityMeasurementModelLayer
 
 # Build and publish
-WORKDIR "/src/QuantityMeasurementWebAPI"
-RUN dotnet publish "QuantityMeasurementWebAPI.csproj" -c Release -o /app/publish
+RUN dotnet publish -c Release -o /app/publish
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 EXPOSE 80
-EXPOSE 443
 
 COPY --from=build /app/publish .
 
