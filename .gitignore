@@ -1,10 +1,8 @@
-# Ignore Postman folders
 .postman/
 postman/
-<<<<<<< HEAD
 
-# Ignore all .txt files
 *.txt
-=======
-*.txt
->>>>>>> 2c4d7caffc387d0929300ae332f116a5f6d5d856
+
+# User-specific files
+*.user
+*.suo

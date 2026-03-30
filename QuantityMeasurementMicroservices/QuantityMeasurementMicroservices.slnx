@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="QuantityMeasurement.ApiGateway/QuantityMeasurement.ApiGateway.csproj" />
+  <Project Path="QuantityMeasurement.AuthService/QuantityMeasurement.AuthService.csproj" />
+  <Project Path="QuantityMeasurement.MeasurementService/QuantityMeasurement.MeasurementService.csproj" />
+  <Project Path="QuantityMeasurement.Shared/QuantityMeasurement.Shared.csproj" />
+  <Project Path="QuantityMeasurement.UserService/QuantityMeasurement.UserService.csproj" />
+</Solution>
