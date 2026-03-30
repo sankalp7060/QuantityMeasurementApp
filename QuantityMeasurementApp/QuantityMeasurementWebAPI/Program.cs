@@ -20,29 +20,7 @@ try
 
     var builder = WebApplication.CreateBuilder(args);
 
-    var jwtKey =
-        Environment.GetEnvironmentVariable("JWT_KEY")
-        ?? throw new InvalidOperationException("JWT_KEY environment variable is not set");
-
-    // Get Database connection string
-    var dbConnectionString =
-        Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")
-        ?? builder.Configuration.GetConnectionString("DefaultConnection");
-
-    // Get Google credentials
-    var googleClientId =
-        Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID")
-        ?? throw new InvalidOperationException("GOOGLE_CLIENT_ID not set");
-    var googleClientSecret =
-        Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET")
-        ?? throw new InvalidOperationException("GOOGLE_CLIENT_SECRET not set");
-
-    // Get Frontend URL
-    var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:3000";
-
-    builder.Host.UseSerilog();
-
-    // JWT Key
+    // ==================== JWT KEY ====================
     var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY");
     if (string.IsNullOrEmpty(jwtKey))
     {
@@ -50,7 +28,25 @@ try
         Log.Warning("Using development JWT key");
     }
 
-    // Services
+    // ==================== DATABASE CONNECTION ====================
+    var dbConnectionString =
+        Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")
+        ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
+    // ==================== GOOGLE OAUTH ====================
+    var googleClientId =
+        Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID")
+        ?? throw new InvalidOperationException("GOOGLE_CLIENT_ID not set");
+    var googleClientSecret =
+        Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET")
+        ?? throw new InvalidOperationException("GOOGLE_CLIENT_SECRET not set");
+
+    // ==================== FRONTEND URL ====================
+    var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:3000";
+
+    builder.Host.UseSerilog();
+
+    // ==================== SERVICES ====================
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
 
@@ -85,7 +81,7 @@ try
 
     builder.Services.AddAuthorization();
 
-    // ==================== CORS CONFIGURATION ====================
+    // ==================== CORS ====================
     builder.Services.AddCors(options =>
     {
         options.AddPolicy(
@@ -106,10 +102,10 @@ try
         );
     });
 
-    // Swagger
+    // ==================== SWAGGER ====================
     builder.Services.AddSwaggerGen();
 
-    // Build App
+    // ==================== BUILD APP ====================
     var app = builder.Build();
 
     // Database

@@ -12,7 +12,7 @@ using QuantityMeasurementRepositoryLayer.Data;
 namespace QuantityMeasurementRepositoryLayer.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    [Migration("20260320095101_InitialCreate")]
+    [Migration("20260330172233_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -24,64 +24,6 @@ namespace QuantityMeasurementRepositoryLayer.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
-
-            modelBuilder.Entity("QuantityMeasurementModelLayer.Entities.AuditLogEntity", b =>
-                {
-                    b.Property<long>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bigint");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("Id"));
-
-                    b.Property<string>("Action")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Details")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Entity")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("ErrorMessage")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("IpAddress")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<bool>("IsSuccess")
-                        .HasColumnType("bit");
-
-                    b.Property<DateTime>("Timestamp")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("UserId")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Username")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("Action")
-                        .HasDatabaseName("IX_AuditLogs_Action");
-
-                    b.HasIndex("Timestamp")
-                        .HasDatabaseName("IX_AuditLogs_Timestamp");
-
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("IX_AuditLogs_UserId");
-
-                    b.ToTable("AuditLogs");
-                });
 
             modelBuilder.Entity("QuantityMeasurementModelLayer.Entities.QuantityMeasurementEntity", b =>
                 {
@@ -179,21 +121,16 @@ namespace QuantityMeasurementRepositoryLayer.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CreatedAt")
-                        .HasDatabaseName("IX_QuantityMeasurements_CreatedAt");
+                    b.HasIndex("CreatedAt");
 
-                    b.HasIndex("FirstOperandCategory")
-                        .HasDatabaseName("IX_QuantityMeasurements_FirstCategory");
+                    b.HasIndex("FirstOperandCategory");
 
-                    b.HasIndex("IsSuccessful")
-                        .HasDatabaseName("IX_QuantityMeasurements_IsSuccessful");
+                    b.HasIndex("IsSuccessful");
 
                     b.HasIndex("MeasurementId")
-                        .IsUnique()
-                        .HasDatabaseName("IX_QuantityMeasurements_MeasurementId");
+                        .IsUnique();
 
-                    b.HasIndex("OperationType")
-                        .HasDatabaseName("IX_QuantityMeasurements_OperationType");
+                    b.HasIndex("OperationType");
 
                     b.ToTable("QuantityMeasurements");
                 });
@@ -237,18 +174,14 @@ namespace QuantityMeasurementRepositoryLayer.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ExpiresAt")
-                        .HasDatabaseName("IX_RefreshTokens_ExpiresAt");
+                    b.HasIndex("ExpiresAt");
 
-                    b.HasIndex("RevokedAt")
-                        .HasDatabaseName("IX_RefreshTokens_RevokedAt");
+                    b.HasIndex("RevokedAt");
 
                     b.HasIndex("Token")
-                        .IsUnique()
-                        .HasDatabaseName("IX_RefreshTokens_Token");
+                        .IsUnique();
 
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("IX_RefreshTokens_UserId");
+                    b.HasIndex("UserId");
 
                     b.ToTable("RefreshTokens");
                 });
@@ -295,8 +228,7 @@ namespace QuantityMeasurementRepositoryLayer.Migrations
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Role")
                         .IsRequired()
@@ -313,12 +245,10 @@ namespace QuantityMeasurementRepositoryLayer.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("Email")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Users_Email");
+                        .IsUnique();
 
                     b.HasIndex("Username")
-                        .IsUnique()
-                        .HasDatabaseName("IX_Users_Username");
+                        .IsUnique();
 
                     b.ToTable("Users");
                 });
