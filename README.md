@@ -1,56 +1,36 @@
-The user wants a merged README.md. This is a pure text/markdown task — no need for computer tools. I'll write the merged README directly.
-
-Here's the merged, deduplicated README.md:
-
-```markdown
-# Quantity Measurement System - Complete Technical Documentation
-
-...
-```
-
-Let me write it out cleanly:
-
----
-
-````markdown
-# Quantity Measurement System — Complete Technical Documentation
+# Quantity Measurement System
 
 ## 📋 Table of Contents
+
 1. [Project Overview](#-project-overview)
 2. [System Architecture](#-system-architecture)
-3. [Core Features by Use Case (UC1–UC15)](#-core-features-by-use-case-uc1uc15)
+3. [Core Features by Use Case](#-core-features-by-use-case-uc1uc22)
 4. [Layer Architecture Deep Dive](#-layer-architecture-deep-dive)
 5. [Design Patterns Implementation](#-design-patterns-implementation)
 6. [SOLID Principles Applied](#-solid-principles-applied)
 7. [Authentication & Authorization](#-authentication--authorization)
-8. [JWT Token Management](#jwt-token-management)
-9. [Google OAuth 2.0 Integration](#google-oauth-20-integration)
-10. [Refresh Token Mechanism](#refresh-token-mechanism)
-11. [Role-Based Access Control (RBAC)](#role-based-access-control-rbac)
-12. [Account Lockout & Rate Limiting](#account-lockout--rate-limiting)
-13. [Password Hashing with BCrypt](#password-hashing-with-bcrypt)
-14. [Security Implementation](#-security-implementation)
-15. [Database Schema & Migrations](#-database-schema--migrations)
-16. [Data Flow & State Management](#-data-flow--state-management)
-17. [Validation System Architecture](#-validation-system-architecture)
-18. [Exception Handling Strategy](#-exception-handling-strategy)
-19. [Persistence Mechanism](#-persistence-mechanism)
-20. [Unit Testing Strategy](#-unit-testing-strategy)
-21. [Performance Considerations](#-performance-considerations)
-22. [User Interface Design](#-user-interface-design)
-23. [API Endpoints Reference](#-api-endpoints-reference)
-24. [Project Structure](#-project-structure)
-25. [Technology Stack](#-technology-stack)
-26. [How to Run & Build](#-how-to-run--build)
-27. [Troubleshooting Guide](#-troubleshooting-guide)
-28. [Future Roadmap](#-future-roadmap)
-29. [Project Metrics Summary](#-project-metrics-summary)
+8. [Security Implementation](#-security-implementation)
+9. [Database Schema & Migrations](#-database-schema--migrations)
+10. [Data Flow & State Management](#-data-flow--state-management)
+11. [Validation System Architecture](#-validation-system-architecture)
+12. [Exception Handling Strategy](#-exception-handling-strategy)
+13. [Persistence Mechanism](#-persistence-mechanism)
+14. [Unit Testing Strategy](#-unit-testing-strategy)
+15. [Performance Considerations](#-performance-considerations)
+16. [User Interface Design](#-user-interface-design-console)
+17. [API Endpoints Reference](#-api-endpoints-reference)
+18. [Project Structure](#-project-structure)
+19. [Technology Stack](#-technology-stack)
+20. [How to Run & Build](#-how-to-run--build)
+21. [Troubleshooting Guide](#-troubleshooting-guide)
+22. [Future Roadmap](#-future-roadmap)
+23. [Project Metrics Summary](#-project-metrics-summary)
 
 ---
 
 ## 🎯 Project Overview
 
-The **Quantity Measurement System** is a comprehensive, production-grade application that evolved through 15 use cases, transforming from a simple feet comparison tool into a full-fledged N-Tier architecture system. It handles measurement operations across multiple unit categories with complete business logic, data persistence, secure REST API endpoints, and a console UI.
+The **Quantity Measurement System** is a comprehensive, production-grade application that evolved through 22 use cases, transforming from a simple feet comparison tool into a full-fledged N-Tier architecture system. It handles measurement operations across multiple unit categories with complete business logic, data persistence, secure REST API endpoints, and a console UI.
 
 ### Key Philosophical Principles
 
@@ -66,68 +46,37 @@ The **Quantity Measurement System** is a comprehensive, production-grade applica
 
 ## 🏗 System Architecture
 
-### High-Level Architecture Diagram
+The application is organized into **5 distinct layers**, each with a single responsibility:
 
-```
-┌─────────────────────────────────────────────────────────────────────┐
-│                        PRESENTATION LAYER                            │
-│          Console UI + API Controllers (WebAPI)                       │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │  AuthController        │  QuantitiesController  │ Admin    │    │
-│  │  • Register/Login      │  • Convert             │ Controller│    │
-│  │  • Google OAuth        │  • Compare             │ • User    │    │
-│  │  • Refresh Token       │  • Add/Subtract/Divide │   Mgmt   │    │
-│  │  MainConsoleMenu       │  MeasurementMenu       │ • Roles  │    │
-│  └─────────────────────────────────────────────────────────────┘    │
-├─────────────────────────────────────────────────────────────────────┤
-│                        BUSINESS LAYER                                │
-│                    QuantityMeasurementBusinessLayer                  │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │  IAuthService               │  IQuantityMeasurementService  │    │
-│  │  • Register/Login logic     │  • Core business logic        │    │
-│  │  • Token generation         │  • Arithmetic operations      │    │
-│  │  • Password hashing         │  • Validation rules           │    │
-│  │  • Account lockout          │  • Exception handling         │    │
-│  └─────────────────────────────────────────────────────────────┘    │
-├─────────────────────────────────────────────────────────────────────┤
-│                        REPOSITORY LAYER                              │
-│                   QuantityMeasurementRepositoryLayer                 │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │  IAuthRepository            │  IQuantityMeasurementRepo     │    │
-│  │  • User CRUD                │  • Measurement CRUD           │    │
-│  │  • Refresh token management │  • History queries            │    │
-│  │  • Token revocation         │  • Statistics aggregation     │    │
-│  └─────────────────────────────────────────────────────────────┘    │
-├─────────────────────────────────────────────────────────────────────┤
-│                          MODEL LAYER                                  │
-│                     QuantityMeasurementModelLayer                     │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │  DTOs              │  Entities        │  Enums              │    │
-│  │  • AuthDTOs        │  • UserEntity    │  • OperationType    │    │
-│  │  • MeasurementDTOs │  • RefreshToken  │                     │    │
-│  │  • ResponseDTOs    │    Entity        │                     │    │
-│  └─────────────────────┴──────────────────┴─────────────────────┘    │
-├─────────────────────────────────────────────────────────────────────┤
-│                         CORE DOMAIN LAYER                              │
-│                        QuantityMeasurementApp                         │
-│  ┌─────────────────────────────────────────────────────────────┐    │
-│  │  GenericQuantity<T>  │  Unit Classes     │  IMeasurable    │    │
-│  │  • Type safety       │  • LengthUnit     │  • Interface    │    │
-│  │  • Immutability      │  • WeightUnit     │  • Contract     │    │
-│  │  • Value equality    │  • VolumeUnit     │                 │    │
-│  │                      │  • TemperatureUnit│                 │    │
-│  └──────────────────────┴───────────────────┴─────────────────┘    │
-└─────────────────────────────────────────────────────────────────────┘
-```
+**PRESENTATION LAYER** — Console UI + API Controllers (WebAPI)
+- `AuthController` — Register, Login, Google OAuth, Refresh Token
+- `QuantitiesController` — Convert, Compare, Add, Subtract, Divide
+- `AdminController` — User Management, Role Assignment
+- `MainConsoleMenu` + `MeasurementMenu` — Console UI
+
+**BUSINESS LAYER** — `QuantityMeasurementBusinessLayer`
+- `IAuthService` — Register/Login logic, token generation, password hashing, account lockout
+- `IQuantityMeasurementService` — Core business logic, arithmetic operations, validation
+
+**REPOSITORY LAYER** — `QuantityMeasurementRepositoryLayer`
+- `IAuthRepository` — User CRUD, refresh token management, token revocation
+- `IQuantityMeasurementRepository` — Measurement CRUD, history queries, statistics
+
+**MODEL LAYER** — `QuantityMeasurementModelLayer`
+- DTOs: `AuthDTOs`, `MeasurementDTOs`, `ResponseDTOs`
+- Entities: `UserEntity`, `RefreshTokenEntity`, `QuantityMeasurementEntity`
+- Enums: `OperationType`
+
+**CORE DOMAIN LAYER** — `QuantityMeasurementApp`
+- `GenericQuantity<T>` — Type-safe, immutable, value-equal quantity
+- Unit Classes: `LengthUnit`, `WeightUnit`, `VolumeUnit`, `TemperatureUnit`
+- `IMeasurable` — Interface contract for all units
 
 ### Layer Communication Flow
 
-```
-User Input → Presentation Layer → Factory → Service Layer → Repository Layer → Model Layer
-      ↑              ↓               ↓            ↓               ↓                ↓
-      └──────────────┴───────────────┴────────────┴───────────────┴────────────────┘
-                                   Response Flow
-```
+**Request:** User Input → Presentation → Factory → Service → Repository → Model
+
+**Response:** Model → Repository → Service → Factory → Presentation → User
 
 ---
 
@@ -150,20 +99,20 @@ User Input → Presentation Layer → Factory → Service Layer → Repository L
 | UC13 | Centralized arithmetic via `ArithmeticOperation` enum + pattern matching |
 | UC14 | Temperature (°C, °F, K) — conversion only; arithmetic throws `NotSupportedException` |
 | UC15 | Full N-Tier architecture across 6 projects |
-| UC16 | Database integration using ADO.NET + in-memory caching for performance optimization |
+| UC16 | Database integration using ADO.NET + in-memory caching |
 | UC17 | ASP.NET Web API layer for exposing application services |
 | UC18 | Authentication & Authorization using JWT and OAuth |
 | UC19 | Frontend implementation using HTML, CSS, and JavaScript |
 | UC20 | Modern frontend using React (component-based architecture) |
 | UC21 | Microservices architecture — independent, scalable services |
-| UC22 | Deployment pipeline — application hosting, CI/CD, and environment configuration |
+| UC22 | Deployment pipeline — hosting, CI/CD, and environment configuration |
 
 ### Unit Conversion Reference
 
-| Unit | To Base |
-|------|---------|
+| Unit | Conversion to Base |
+|------|-------------------|
 | Yard | 3.0 ft |
-| Centimeter | 1/(2.54×12) ft |
+| Centimeter | 1 / (2.54 × 12) ft |
 | Gram | 0.001 kg |
 | Pound | 0.45359237 kg |
 | Millilitre | 0.001 L |
@@ -216,7 +165,8 @@ public class QuantityResponse
 public class QuantityMeasurementCacheRepository : IQuantityMeasurementRepository
 {
     private static readonly Lazy<QuantityMeasurementCacheRepository> _instance =
-        new Lazy<QuantityMeasurementCacheRepository>(() => new QuantityMeasurementCacheRepository());
+        new Lazy<QuantityMeasurementCacheRepository>(
+            () => new QuantityMeasurementCacheRepository());
 
     public static QuantityMeasurementCacheRepository Instance => _instance.Value;
 
@@ -244,8 +194,9 @@ public interface IQuantityMeasurementService
 }
 ```
 
-**Operation Flow Pattern (each method):**
-1. Log start → 2. Validate inputs → 3. Create domain objects → 4. Perform logic → 5. Create entity → 6. Persist to repository → 7. Return response
+**Operation Flow Pattern (every method follows this):**
+
+Log Start → Validate Inputs → Create Domain Objects → Perform Logic → Create Entity → Persist to Repository → Return Response
 
 ### Presentation Layer — Factory
 
@@ -275,9 +226,9 @@ public class ServiceFactory
 |---------|----------|---------|
 | **Singleton** | Repository | Single source of truth, thread-safe via `Lazy<T>` |
 | **Factory** | Presentation | Centralized dependency creation & injection |
-| **Facade** | Controller/Menu | Simplifies subsystem complexity for UI |
+| **Facade** | Controller / Menu | Simplifies subsystem complexity for the UI |
 | **Adapter** | Legacy Integration | Reuses UC1–14 console code in N-Tier shell |
-| **Strategy** | Domain | Encapsulates `ADD`/`SUBTRACT`/`DIVIDE` arithmetic |
+| **Strategy** | Domain | Encapsulates ADD / SUBTRACT / DIVIDE arithmetic |
 | **Repository** | Data Access | Abstracts persistence; mockable for testing |
 | **Dependency Injection** | Throughout | Loose coupling; testable with mocks |
 
@@ -304,28 +255,32 @@ private double PerformBaseArithmetic(Quantity<T> other, ArithmeticOperation oper
 ## 📐 SOLID Principles Applied
 
 ### Single Responsibility (SRP)
-Each project/class has exactly one reason to change:
 
-| Component | Responsibility |
-|-----------|----------------|
+Each class has exactly one reason to change:
+
+| Component | Sole Responsibility |
+|-----------|---------------------|
 | `MeasurementMenu` | UI display & input only |
 | `QuantityMeasurementService` | Business rules only |
 | `QuantityMeasurementCacheRepository` | Data storage only |
 | `QuantityDTO` | Input shape only |
 
 ### Open/Closed (OCP)
+
 New units are added by creating a new `IMeasurable` class — zero changes to existing code.
 
 ### Liskov Substitution (LSP)
-All units implement `IMeasurable` and are fully substitutable. Temperature throws `NotSupportedException` on arithmetic (not a silent failure — explicit and meaningful).
+
+All units implement `IMeasurable` and are fully substitutable. Temperature throws `NotSupportedException` on arithmetic — explicit and meaningful, not a silent failure.
 
 ### Interface Segregation (ISP)
+
 - `IQuantityMeasurementService` — business methods only
 - `IQuantityMeasurementRepository` — data access methods only
 - No class is forced to implement unused members
 
 ### Dependency Inversion (DIP)
-High-level modules depend on abstractions:
+
 ```csharp
 // Controller depends on interface, not concrete class
 private readonly IQuantityMeasurementService _service;
@@ -340,7 +295,6 @@ private readonly IQuantityMeasurementRepository _repository;
 
 ### JWT Token Management
 
-**Token Generation:**
 ```csharp
 var token = new JwtSecurityToken(
     issuer: _configuration["Jwt:Issuer"],
@@ -358,20 +312,7 @@ var token = new JwtSecurityToken(
 );
 ```
 
-**Validation Parameters:**
-```csharp
-options.TokenValidationParameters = new TokenValidationParameters
-{
-    ValidateIssuer = true,
-    ValidateAudience = true,
-    ValidateLifetime = true,
-    ValidateIssuerSigningKey = true,
-    ValidIssuer = builder.Configuration["Jwt:Issuer"],
-    ValidAudience = builder.Configuration["Jwt:Audience"],
-    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey)),
-    ClockSkew = TimeSpan.Zero
-};
-```
+Token validation uses `ClockSkew = TimeSpan.Zero` — no tolerance for expired tokens.
 
 ### Google OAuth 2.0 Integration
 
@@ -385,15 +326,9 @@ public IActionResult GoogleLogin()
               $"access_type=offline&prompt=consent";
     return Redirect(url);
 }
-
-[HttpGet("google/callback")]
-public async Task<IActionResult> GoogleCallback(string code, string? error)
-{
-    var tokenResponse = await ExchangeCodeForTokens(code);
-    var userInfo     = await GetGoogleUserInfo(tokenResponse.access_token);
-    // Create or retrieve user, generate JWT, redirect with tokens
-}
 ```
+
+The callback exchanges the auth code for tokens, creates or retrieves the user, generates a JWT pair, and redirects to the frontend.
 
 ### Refresh Token Mechanism
 
@@ -407,7 +342,7 @@ private string GenerateRefreshToken()
 }
 ```
 
-**Token Rotation:** Each refresh call revokes the current token and issues a new pair.
+**Token Rotation Strategy:** Every refresh call revokes the old token and issues a brand-new pair. Revoked tokens store the revoking IP and timestamp.
 
 ### Role-Based Access Control (RBAC)
 
@@ -415,17 +350,17 @@ private string GenerateRefreshToken()
 [Authorize(Roles = "Admin")]
 public class AdminController : ControllerBase
 {
-    [HttpGet("users")]         public async Task<IActionResult> GetAllUsers() { }
-    [HttpPut("users/{id}/role")]  public async Task<IActionResult> UpdateUserRole(...) { }
-    [HttpPut("users/{id}/unlock")] public async Task<IActionResult> UnlockUser(...) { }
-    [HttpGet("statistics")]    public async Task<IActionResult> GetUserStatistics() { }
+    [HttpGet("users")]              public async Task<IActionResult> GetAllUsers() { }
+    [HttpPut("users/{id}/role")]    public async Task<IActionResult> UpdateUserRole(...) { }
+    [HttpPut("users/{id}/unlock")]  public async Task<IActionResult> UnlockUser(...) { }
+    [HttpGet("statistics")]         public async Task<IActionResult> GetUserStatistics() { }
 }
 ```
 
 ### Account Lockout & Rate Limiting
 
 ```csharp
-// Lockout after 5 failed attempts for 15 minutes
+// Account lockout — 5 failed attempts triggers a 15-minute lockout
 private const int MAX_FAILED_ATTEMPTS = 5;
 private const int LOCKOUT_MINUTES = 15;
 
@@ -434,13 +369,12 @@ if (user.FailedLoginAttempts >= MAX_FAILED_ATTEMPTS)
 ```
 
 ```csharp
-// IP-based rate limiting on /Auth/login (10 requests / 60 seconds)
+// IP-based rate limiting on /Auth/login — max 10 requests per 60 seconds
 public class RateLimitingMiddleware
 {
     private static readonly ConcurrentDictionary<string, ClientRequestInfo> _clientRequests = new();
     private const int MAX_REQUESTS = 10;
     private const int TIME_WINDOW_SECONDS = 60;
-    // ...
 }
 ```
 
@@ -450,11 +384,11 @@ public class RateLimitingMiddleware
 // Registration
 string passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 12);
 
-// Login
+// Login verification
 bool isValidPassword = BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash);
 ```
 
-> **Work factor 12** = 2¹² = 4096 iterations (~250 ms per hash). Salt is auto-generated and embedded.
+> **Work factor 12** = 2¹² = 4096 iterations (~250 ms per hash). Salt is auto-generated and embedded in the hash string.
 
 ---
 
@@ -468,6 +402,8 @@ headers["X-Frame-Options"]           = "DENY";
 headers["X-Content-Type-Options"]    = "nosniff";
 headers["X-XSS-Protection"]          = "1; mode=block";
 headers["Referrer-Policy"]           = "strict-origin-when-cross-origin";
+headers["Content-Security-Policy"]   = "default-src 'self'";
+headers["Permissions-Policy"]        = "geolocation=(), microphone=(), camera=()";
 ```
 
 ### CORS Configuration
@@ -523,7 +459,8 @@ CREATE TABLE RefreshTokens (
     ReplacedByToken NVARCHAR(200) NULL,
     CreatedByIp     NVARCHAR(50)  NULL,
     CreatedAt       DATETIME2     NOT NULL,
-    CONSTRAINT FK_RefreshTokens_Users FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE
+    CONSTRAINT FK_RefreshTokens_Users
+        FOREIGN KEY (UserId) REFERENCES Users(Id) ON DELETE CASCADE
 );
 ```
 
@@ -531,18 +468,25 @@ CREATE TABLE RefreshTokens (
 
 ```sql
 CREATE TABLE QuantityMeasurements (
-    Id                    BIGINT IDENTITY(1,1) PRIMARY KEY,
-    MeasurementId         NVARCHAR(50)  NOT NULL,
-    CreatedAt             DATETIME2     NOT NULL,
-    OperationType         INT           NOT NULL,
-    FirstOperandValue     FLOAT NULL, FirstOperandUnit NVARCHAR(20) NULL, FirstOperandCategory NVARCHAR(20) NULL,
-    SecondOperandValue    FLOAT NULL, SecondOperandUnit NVARCHAR(20) NULL, SecondOperandCategory NVARCHAR(20) NULL,
-    TargetUnit            NVARCHAR(20)  NULL,
-    SourceOperandValue    FLOAT NULL, SourceOperandUnit NVARCHAR(20) NULL, SourceOperandCategory NVARCHAR(20) NULL,
-    ResultValue           FLOAT NULL, ResultUnit NVARCHAR(20) NULL,
-    FormattedResult       NVARCHAR(200) NULL,
-    IsSuccessful          BIT           NOT NULL,
-    ErrorDetails          NVARCHAR(MAX) NULL
+    Id                   BIGINT IDENTITY(1,1) PRIMARY KEY,
+    MeasurementId        NVARCHAR(50)  NOT NULL,
+    CreatedAt            DATETIME2     NOT NULL,
+    OperationType        INT           NOT NULL,
+    FirstOperandValue    FLOAT         NULL,
+    FirstOperandUnit     NVARCHAR(20)  NULL,
+    FirstOperandCategory NVARCHAR(20)  NULL,
+    SecondOperandValue   FLOAT         NULL,
+    SecondOperandUnit    NVARCHAR(20)  NULL,
+    SecondOperandCategory NVARCHAR(20) NULL,
+    TargetUnit           NVARCHAR(20)  NULL,
+    SourceOperandValue   FLOAT         NULL,
+    SourceOperandUnit    NVARCHAR(20)  NULL,
+    SourceOperandCategory NVARCHAR(20) NULL,
+    ResultValue          FLOAT         NULL,
+    ResultUnit           NVARCHAR(20)  NULL,
+    FormattedResult      NVARCHAR(200) NULL,
+    IsSuccessful         BIT           NOT NULL,
+    ErrorDetails         NVARCHAR(MAX) NULL
 );
 ```
 
@@ -568,27 +512,18 @@ dotnet ef database update \
 
 ### Authentication Flow
 
-```
-CLIENT → POST /login → AuthController → AuthService → BCrypt.Verify → SaveRefreshToken → Return JWT
-CLIENT ← 401         ← API            ← POST /refresh-token → Revoke old → Generate new → Return new pair
-```
+**Login:** Client → POST /login → Validate credentials → BCrypt.Verify → Save refresh token → Return JWT + refresh token
+
+**Token Refresh:** Client receives 401 → POST /refresh-token → Validate token → Revoke old token → Generate new pair → Return new tokens
 
 ### Measurement Operation Flow
 
-```
-User Input
-  → Presentation (validate format)
-  → Service (validate rules, create domain objects)
-  → Domain (GenericQuantity<T> arithmetic)
-  → Repository (persist entity)
-  → Response DTO
-  → Display
-```
+**Input → Presentation** (format validation) → **Service** (rule validation + domain object creation) → **GenericQuantity\<T\>** (arithmetic) → **Repository** (persist) → **Response DTO** → **Display**
 
 ### State Transitions
 
-| State | Next States |
-|-------|-------------|
+| State | Possible Next States |
+|-------|----------------------|
 | INIT | MAIN_MENU |
 | MAIN_MENU | OPERATION_SELECT, EXIT |
 | OPERATION_SELECT | INPUT_COLLECTION |
@@ -606,16 +541,17 @@ User Input
 
 **Layer 1 — Presentation**
 - Empty / whitespace check
-- Numeric format check (`double.TryParse`)
+- Numeric format check via `double.TryParse`
 - ESC / Backspace key handling
 
 **Layer 2 — Business**
 - Same category enforcement
 - Unit existence check
-- Division-by-zero guard (`|value| < 1e-9`)
+- Division-by-zero guard (absolute value < 1e-9)
 - Temperature arithmetic rejection
 
 **Layer 3 — Domain**
+
 ```csharp
 private static void ValidateValue(double value)
 {
@@ -644,15 +580,10 @@ private static void ValidateValue(double value)
 
 ### Exception Hierarchy
 
-```
-Exception
-├── QuantityMeasurementException  (custom — business layer)
-│   ├── OperationType property
-│   └── Timestamp property
-├── InvalidValueException         (custom — domain layer)
-├── NotSupportedException         (temperature arithmetic)
-└── DivideByZeroException
-```
+- `QuantityMeasurementException` (custom — business layer) — carries `OperationType` and `Timestamp`
+- `InvalidValueException` (custom — domain layer)
+- `NotSupportedException` — thrown by temperature units on arithmetic
+- `DivideByZeroException` — thrown by business layer on zero divisor
 
 ### Handling by Layer
 
@@ -660,19 +591,13 @@ Exception
 |-------|----------|
 | Domain | Throw typed custom exceptions |
 | Business | Catch domain exceptions → wrap in `QuantityMeasurementException` |
-| Presentation | Catch all → display friendly message + retry prompt |
+| Presentation | Catch all → display friendly message + offer retry |
 
 ---
 
 ## 💾 Persistence Mechanism
 
-### Architecture
-
-```
-In-Memory ConcurrentDictionary  ←→  quantity_data.json (auto-save / auto-load)
-```
-
-### Persistence Features
+**Architecture:** In-Memory `ConcurrentDictionary` synchronized with `quantity_data.json` on disk.
 
 | Feature | Implementation |
 |---------|----------------|
@@ -692,7 +617,7 @@ In-Memory ConcurrentDictionary  ←→  quantity_data.json (auto-save / auto-loa
   "quantity1Value": 12.0,
   "quantity1Unit": "FEET",
   "quantity1Category": "LENGTH",
-  "formattedResult": "12 FEET ≠ 12 INCH",
+  "formattedResult": "12 FEET is not equal to 12 INCH",
   "isSuccess": true
 }
 ```
@@ -701,15 +626,15 @@ In-Memory ConcurrentDictionary  ←→  quantity_data.json (auto-save / auto-loa
 
 ## 🧪 Unit Testing Strategy
 
-### Test Categories
+### Test Suites
 
-| Suite | Coverage |
-|-------|----------|
+| Suite | What it covers |
+|-------|----------------|
 | `DomainTests` | GenericQuantity arithmetic, conversion, equality, edge cases |
-| `UnitTests` | Each unit class (Length, Weight, Volume, Temperature) |
-| `IntegrationTests` | End-to-end workflows including temperature |
-| `ServiceTests` | Business service with mocked repository |
-| `ArchitectureTests` | Layer independence / scalability |
+| `UnitTests` | Each unit class — Length, Weight, Volume, Temperature |
+| `IntegrationTests` | End-to-end workflows including temperature flows |
+| `ServiceTests` | Business service with mocked repository (Moq) |
+| `ArchitectureTests` | Layer independence and scalability |
 
 ### Sample Test Patterns
 
@@ -746,69 +671,65 @@ public void Add_Temperature_ThrowsNotSupportedException()
 | Async service methods | `Task.Run` wrapping for future I/O scalability |
 | In-memory cache | Sub-millisecond reads after initial load |
 
-### Performance Metrics
+### Performance Benchmarks
 
-| Operation | Avg Time |
-|-----------|----------|
-| Compare / Add / Subtract / Divide | < 1 ms |
-| Repository Save (to disk) | ~10 ms |
-| Repository Load (startup) | ~50 ms |
-| Application total memory | < 50 MB |
+| Operation | Average Time |
+|-----------|--------------|
+| Compare / Add / Subtract / Divide | less than 1 ms |
+| Repository save (to disk) | ~10 ms |
+| Repository load (app startup) | ~50 ms |
+| Total application memory | less than 50 MB |
 
 ---
 
 ## 🖥 User Interface Design (Console)
 
-### Features
-
 | Feature | Implementation |
 |---------|----------------|
 | ESC Cancel | Key detection at every prompt |
-| Backspace | `StringBuilder`-based input loop |
-| Color Coding | `Console.ForegroundColor` (Cyan=headers, Green=success, Red=errors) |
-| Box Drawing | Unicode characters (`╔ ═ ║ ╚`) |
-| Retry Prompt | After every error — `y/n` confirmation |
+| Backspace support | `StringBuilder`-based character-by-character input loop |
+| Color coding | `Console.ForegroundColor` — Cyan = headers, Green = success, Red = errors |
+| Box drawing | Unicode box characters for professional-looking menus |
+| Retry prompt | `y/n` confirmation offered after every error |
 
-### Input Flow
+**Input Flow:**
 
-```
-Category (1–4) → Unit (1–N) → Value (numeric + backspace) → Confirm → Display Result
-```
+Select Category (1-4) → Select Unit (1-N) → Enter Value (numeric, backspace supported) → Confirm → Display Result
 
 ---
 
 ## 📚 API Endpoints Reference
 
-### Authentication (`/api/v1/Auth`)
+### Authentication — `/api/v1/Auth`
 
-| Method | Endpoint | Auth |
-|--------|----------|------|
-| POST | `/register` | ❌ |
-| POST | `/login` | ❌ |
-| POST | `/refresh-token` | ❌ |
-| POST | `/logout` | ✅ |
-| GET  | `/profile` | ✅ |
-| GET  | `/status` | ❌ |
-| GET  | `/google/login` | ❌ |
-| GET  | `/google/callback` | ❌ |
+| Method | Endpoint | Auth Required |
+|--------|----------|:---:|
+| POST | `/register` | No |
+| POST | `/login` | No |
+| POST | `/refresh-token` | No |
+| POST | `/logout` | Yes |
+| GET | `/profile` | Yes |
+| GET | `/status` | No |
+| GET | `/google/login` | No |
+| GET | `/google/callback` | No |
 
-### Quantity Operations (`/api/v1/Quantities`)
+### Quantity Operations — `/api/v1/Quantities`
 
-| Method | Endpoint | Auth |
-|--------|----------|------|
-| POST | `/convert` | ✅ |
-| POST | `/compare` | ✅ |
-| POST | `/add` | ✅ |
-| POST | `/subtract` | ✅ |
-| POST | `/divide` | ✅ |
-| GET  | `/history` | ✅ |
-| GET  | `/history/category/{category}` | ✅ |
-| GET  | `/history/range` | ✅ |
-| GET  | `/history/errors` | ✅ |
-| GET  | `/statistics` | ✅ |
-| GET  | `/count/{operation}` | ✅ |
+| Method | Endpoint | Auth Required |
+|--------|----------|:---:|
+| POST | `/convert` | Yes |
+| POST | `/compare` | Yes |
+| POST | `/add` | Yes |
+| POST | `/subtract` | Yes |
+| POST | `/divide` | Yes |
+| GET | `/history` | Yes |
+| GET | `/history/category/{category}` | Yes |
+| GET | `/history/range` | Yes |
+| GET | `/history/errors` | Yes |
+| GET | `/statistics` | Yes |
+| GET | `/count/{operation}` | Yes |
 
-### Admin (`/api/v1/admin`) — Requires `Admin` role
+### Admin — `/api/v1/admin` *(Admin role required)*
 
 | Method | Endpoint |
 |--------|----------|
@@ -828,16 +749,16 @@ QuantityMeasurementApp/
 │
 ├── QuantityMeasurementApp.sln
 │
-├── QuantityMeasurementApp/              # UC1–14 Core Domain
+├── QuantityMeasurementApp/
 │   ├── Core/
 │   │   ├── Abstractions/IMeasurable.cs
 │   │   └── Exceptions/
 │   ├── Domain/
 │   │   ├── Quantities/GenericQuantity.cs
-│   │   ├── Units/  (LengthUnit, WeightUnit, VolumeUnit, TemperatureUnit)
-│   │   └── ValueObjects/ (Feet, Inch)
+│   │   ├── Units/
+│   │   └── ValueObjects/
 │   └── UI/
-│       └── Menus/ (MainMenu, GenericLengthMenu, …)
+│       └── Menus/
 │
 ├── QuantityMeasurementApp.Tests/
 │   ├── DomainTests/
@@ -847,26 +768,26 @@ QuantityMeasurementApp/
 │   └── ArchitectureTests/
 │
 ├── QuantityMeasurementModelLayer/
-│   ├── DTOs/  (QuantityDTO, QuantityResponse, AuthDTOs)
-│   └── Entities/ (QuantityMeasurementEntity, UserEntity, RefreshTokenEntity)
+│   ├── DTOs/
+│   └── Entities/
 │
 ├── QuantityMeasurementRepositoryLayer/
-│   ├── Interface/ (IQuantityMeasurementRepository, IAuthRepository)
-│   ├── Services/  (QuantityMeasurementCacheRepository)
+│   ├── Interface/
+│   ├── Services/
 │   └── Migrations/
 │
 ├── QuantityMeasurementBusinessLayer/
-│   ├── Interface/ (IQuantityMeasurementService, IAuthService)
-│   ├── Services/  (QuantityMeasurementService, AuthService)
-│   └── Exceptions/QuantityMeasurementException.cs
+│   ├── Interface/
+│   ├── Services/
+│   └── Exceptions/
 │
-├── QuantityMeasurementConsole/          # Console UI (UC15)
+├── QuantityMeasurementConsole/
 │   ├── Factory/ServiceFactory.cs
-│   └── Menus/ (MainConsoleMenu, MeasurementMenu)
+│   └── Menus/
 │
-└── QuantityMeasurementWebAPI/           # REST API
-    ├── Controllers/ (AuthController, QuantitiesController, AdminController)
-    ├── Middleware/ (RateLimitingMiddleware, SecurityHeadersMiddleware)
+└── QuantityMeasurementWebAPI/
+    ├── Controllers/
+    ├── Middleware/
     └── Program.cs
 ```
 
@@ -895,6 +816,7 @@ QuantityMeasurementApp/
 ## 🚀 How to Run & Build
 
 ### Prerequisites
+
 - .NET 8.0 SDK
 - SQL Server (LocalDB or full instance)
 - Git (optional)
@@ -904,10 +826,8 @@ QuantityMeasurementApp/
 ```bash
 git clone https://github.com/yourusername/QuantityMeasurementApp.git
 cd QuantityMeasurementApp
-
 dotnet restore
 dotnet build
-
 cd QuantityMeasurementConsole
 dotnet run
 ```
@@ -915,28 +835,32 @@ dotnet run
 ### Web API
 
 ```bash
-# 1. Set the JWT secret
+# Step 1 — Set the JWT secret
+
 # Windows CMD
 setx JWT_KEY "YourSuperSecretKeyAtLeast32CharactersLong"
+
 # PowerShell
 $env:JWT_KEY="YourSuperSecretKeyAtLeast32CharactersLong"
+
 # Linux / macOS
 export JWT_KEY="YourSuperSecretKeyAtLeast32CharactersLong"
 
-# 2. Update appsettings.json connection string
+# Step 2 — Update connection string in appsettings.json
 # "Server=localhost\\SQLEXPRESS;Database=QuantityMeasurementDB;Trusted_Connection=True;TrustServerCertificate=true"
 
-# 3. Apply migrations
+# Step 3 — Apply migrations
 dotnet ef database update \
   --context ApplicationDbContext \
   --startup-project QuantityMeasurementWebAPI/QuantityMeasurementWebAPI.csproj \
   --project QuantityMeasurementRepositoryLayer/QuantityMeasurementRepositoryLayer.csproj
 
-# 4. Run
+# Step 4 — Run the API
 cd QuantityMeasurementWebAPI
 dotnet run --urls "http://localhost:5000"
 
-# 5. Swagger UI → http://localhost:5000/swagger
+# Step 5 — Open Swagger UI
+# http://localhost:5000/swagger
 ```
 
 ### Run Tests
@@ -953,13 +877,15 @@ dotnet test
 | Release | `dotnet build -c Release` |
 | Clean | `dotnet clean` |
 
-### Publish Self-Contained
+### Publish Self-Contained Executable
 
 ```bash
 # Windows
 dotnet publish -c Release -r win-x64 --self-contained true
+
 # Linux
 dotnet publish -c Release -r linux-x64 --self-contained true
+
 # macOS
 dotnet publish -c Release -r osx-x64 --self-contained true
 ```
@@ -977,34 +903,37 @@ docker run -p 5000:80 -e JWT_KEY="your-secret-key" quantity-measurement-api
 
 | Issue | Error | Solution |
 |-------|-------|----------|
-| JWT Key missing | `JWT_KEY environment variable is not set` | Set the env var and restart terminal |
-| DB connection failed | `Cannot open database` | Run `dotnet ef database update` or create DB manually |
+| JWT Key missing | `JWT_KEY environment variable is not set` | Set the env var and restart your terminal |
+| DB connection failed | `Cannot open database` | Run `dotnet ef database update` or create the DB manually |
 | Google OAuth mismatch | `redirect_uri_mismatch` | Add `http://localhost:5000/api/v1/Auth/google/callback` in Google Cloud Console |
-| CORS error | `No 'Access-Control-Allow-Origin'` | Add your frontend origin to the CORS policy |
-| Token expired | `401 Unauthorized` | Call `POST /api/v1/Auth/refresh-token` with the refresh token |
-| JSON file corrupted | Repository load failure | Delete `quantity_data.json` to reset the cache |
-| ESC not working | Cannot cancel in console | Run in a proper terminal; use Ctrl+C as fallback |
-| Test tolerance failures | Floating-point assertion errors | Increase `const double tolerance` value |
+| CORS error | `No 'Access-Control-Allow-Origin'` | Add your frontend origin to the CORS policy in `Program.cs` |
+| Token expired | `401 Unauthorized` | Call `POST /api/v1/Auth/refresh-token` with a valid refresh token |
+| JSON file corrupted | Repository load failure | Delete `quantity_data.json` to reset the local cache |
+| ESC key not working | Cannot cancel in console | Run in a proper terminal window; use Ctrl+C as fallback |
+| Test tolerance failures | Floating-point assertion errors | Increase `const double tolerance` in the affected test class |
 
 ---
 
 ## 🗺 Future Roadmap
 
 ### Short-term (0–3 months)
-- [ ] Password reset & email verification
+
+- [ ] Password reset and email verification
 - [ ] Two-factor authentication (2FA)
 - [ ] API versioning (v2)
 - [ ] SQLite persistence option for console app
 - [ ] Export history to CSV / Excel
 
 ### Medium-term (3–12 months)
+
 - [ ] Redis cache for refresh tokens
 - [ ] Microservices split with Docker Compose
 - [ ] GraphQL API alternative
-- [ ] Rate limiting per user (not just IP)
+- [ ] Per-user rate limiting (not just per-IP)
 - [ ] Blazor / MAUI front-end
 
 ### Long-term (1–2 years)
+
 - [ ] Kubernetes deployment
 - [ ] CI/CD pipeline with GitHub Actions
 - [ ] OpenTelemetry performance monitoring
@@ -1017,39 +946,32 @@ docker run -p 5000:80 -e JWT_KEY="your-secret-key" quantity-measurement-api
 
 | Metric | Value |
 |--------|-------|
-| Total Projects | 7 (core + tests + model + repo + business + console + WebAPI) |
+| Total Projects | 7 |
 | Total Files | 80+ |
 | Lines of Code | 18,000+ |
 | Test Cases | 300+ |
 | Test Coverage | 90%+ |
-| Use Cases Implemented | 15 |
+| Use Cases Implemented | 22 |
 | Supported Units | 14 |
 | API Endpoints | 25+ |
 | Design Patterns | 7 |
 | SOLID Principles | All 5 |
 | Architecture Layers | 5 |
 | Build Time | ~15 seconds |
-| Memory Footprint | < 50 MB |
+| Memory Footprint | less than 50 MB |
 | First Release | March 2026 |
 
 ---
 
 ## 👥 Contributors
 
-- **Lead Developer / Architect / Testing / Documentation** — [Your Name]
+**Lead Developer / Architect / Testing / Documentation** — [Your Name]
 
 ---
 
 ## 📄 License
 
-This project is licensed under the **MIT License**.
-
-```
-MIT License — Copyright (c) 2026 Quantity Measurement System
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files, to deal in the Software
-without restriction...
-```
+This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
 
 ---
 
@@ -1063,6 +985,3 @@ without restriction...
 ---
 
 *Last updated: March 30, 2026 — Version 2.0.0*
-````
-
----
