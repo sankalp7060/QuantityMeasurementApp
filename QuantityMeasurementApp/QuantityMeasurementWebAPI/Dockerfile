@@ -2,26 +2,13 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy the solution file from parent directory
-COPY ../QuantityMeasurementApp.sln ./
-
-# Copy all project files from their locations relative to parent
-COPY ../QuantityMeasurementWebAPI/QuantityMeasurementWebAPI.csproj ./QuantityMeasurementWebAPI/
-COPY ../QuantityMeasurementBusinessLayer/QuantityMeasurementBusinessLayer.csproj ./QuantityMeasurementBusinessLayer/
-COPY ../QuantityMeasurementRepositoryLayer/QuantityMeasurementRepositoryLayer.csproj ./QuantityMeasurementRepositoryLayer/
-COPY ../QuantityMeasurementModelLayer/QuantityMeasurementModelLayer.csproj ./QuantityMeasurementModelLayer/
+# Copy all project files (they are in the build context since we set build context to QuantityMeasurementWebAPI)
+COPY . .
 
 # Restore dependencies
-RUN dotnet restore "QuantityMeasurementWebAPI/QuantityMeasurementWebAPI.csproj"
-
-# Copy all source code
-COPY ../QuantityMeasurementWebAPI ./QuantityMeasurementWebAPI
-COPY ../QuantityMeasurementBusinessLayer ./QuantityMeasurementBusinessLayer
-COPY ../QuantityMeasurementRepositoryLayer ./QuantityMeasurementRepositoryLayer
-COPY ../QuantityMeasurementModelLayer ./QuantityMeasurementModelLayer
+RUN dotnet restore "QuantityMeasurementWebAPI.csproj"
 
 # Build and publish
-WORKDIR "/src/QuantityMeasurementWebAPI"
 RUN dotnet publish "QuantityMeasurementWebAPI.csproj" -c Release -o /app/publish
 
 # Runtime stage
