@@ -33,6 +33,11 @@ try
         Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")
         ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
+    if (string.IsNullOrEmpty(dbConnectionString))
+    {
+        throw new InvalidOperationException("Database connection string is not configured");
+    }
+
     // ==================== GOOGLE OAUTH ====================
     var googleClientId =
         Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID")
@@ -50,9 +55,10 @@ try
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
 
-    // Database
+    // Database - Using SQL Server (stay with SQL Server, not PostgreSQL)
+    // Since Npgsql compatibility issue, use SQL Server
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
+        options.UseSqlServer(dbConnectionString)
     );
 
     // Repositories & Services
@@ -93,7 +99,8 @@ try
                         "http://localhost:3000",
                         "http://localhost:3001",
                         "http://127.0.0.1:5500",
-                        "http://localhost:5500"
+                        "http://localhost:5500",
+                        frontendUrl
                     )
                     .AllowAnyMethod()
                     .AllowAnyHeader()
