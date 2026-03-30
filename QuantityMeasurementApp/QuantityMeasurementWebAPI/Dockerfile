@@ -1,24 +1,18 @@
-# Use .NET 8 SDK to build the app
+# Use .NET 8 SDK
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-# Copy csproj files (they are in the build context root since we're in QuantityMeasurementWebAPI folder)
-COPY *.csproj ./
-COPY ../QuantityMeasurementBusinessLayer/*.csproj ./QuantityMeasurementBusinessLayer/
-COPY ../QuantityMeasurementRepositoryLayer/*.csproj ./QuantityMeasurementRepositoryLayer/
-COPY ../QuantityMeasurementModelLayer/*.csproj ./QuantityMeasurementModelLayer/
+# Copy the entire repository into the build context
+# Since the build context is QuantityMeasurementApp/QuantityMeasurementWebAPI, 
+# we need to copy from the parent directory
+COPY .. .
 
 # Restore dependencies
-RUN dotnet restore
-
-# Copy everything else
-COPY . .
-COPY ../QuantityMeasurementBusinessLayer ./QuantityMeasurementBusinessLayer
-COPY ../QuantityMeasurementRepositoryLayer ./QuantityMeasurementRepositoryLayer
-COPY ../QuantityMeasurementModelLayer ./QuantityMeasurementModelLayer
+RUN dotnet restore "QuantityMeasurementWebAPI/QuantityMeasurementWebAPI.csproj"
 
 # Build and publish
-RUN dotnet publish -c Release -o /app/publish
+WORKDIR "/src/QuantityMeasurementWebAPI"
+RUN dotnet publish "QuantityMeasurementWebAPI.csproj" -c Release -o /app/publish
 
 # Runtime stage
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
