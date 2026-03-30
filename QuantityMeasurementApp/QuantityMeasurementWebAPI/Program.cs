@@ -55,11 +55,26 @@ try
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
 
-    // Database - Using SQL Server (stay with SQL Server, not PostgreSQL)
-    // Since Npgsql compatibility issue, use SQL Server
-    builder.Services.AddDbContext<ApplicationDbContext>(options =>
-        options.UseSqlServer(dbConnectionString)
-    );
+    if (dbConnectionString.Contains("Host=") || dbConnectionString.Contains("postgres"))
+    {
+        // Use PostgreSQL
+        builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseNpgsql(
+                dbConnectionString,
+                npgsqlOptions =>
+                {
+                    npgsqlOptions.MigrationsAssembly("QuantityMeasurementRepositoryLayer");
+                }
+            )
+        );
+    }
+    else
+    {
+        // Use SQL Server (for local development)
+        builder.Services.AddDbContext<ApplicationDbContext>(options =>
+            options.UseSqlServer(dbConnectionString)
+        );
+    }
 
     // Repositories & Services
     builder.Services.AddScoped<IQuantityMeasurementRepository, QuantityMeasurementRepository>();
