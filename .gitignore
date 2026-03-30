@@ -1,3 +1,6 @@
 # Ignore Postman folders
 .postman/
 postman/
+
+# Ignore all .txt files
+*.txt
