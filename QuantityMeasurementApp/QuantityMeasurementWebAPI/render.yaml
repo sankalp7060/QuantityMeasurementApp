@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: quantity-measurement-backend
+    runtime: dotnet
+    buildCommand: dotnet publish -c Release -o release
+    startCommand: cd QuantityMeasurementWebAPI && dotnet ./release/QuantityMeasurementWebAPI.dll
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: JWT_KEY
+        sync: false
+      - key: DB_CONNECTION_STRING
+        sync: false
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      - key: FRONTEND_URL
+        sync: false

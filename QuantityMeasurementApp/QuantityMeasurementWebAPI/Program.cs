@@ -19,6 +19,27 @@ try
     Log.Information("Starting Quantity Measurement API");
 
     var builder = WebApplication.CreateBuilder(args);
+
+    var jwtKey =
+        Environment.GetEnvironmentVariable("JWT_KEY")
+        ?? throw new InvalidOperationException("JWT_KEY environment variable is not set");
+
+    // Get Database connection string
+    var dbConnectionString =
+        Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")
+        ?? builder.Configuration.GetConnectionString("DefaultConnection");
+
+    // Get Google credentials
+    var googleClientId =
+        Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID")
+        ?? throw new InvalidOperationException("GOOGLE_CLIENT_ID not set");
+    var googleClientSecret =
+        Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET")
+        ?? throw new InvalidOperationException("GOOGLE_CLIENT_SECRET not set");
+
+    // Get Frontend URL
+    var frontendUrl = Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "http://localhost:3000";
+
     builder.Host.UseSerilog();
 
     // JWT Key
