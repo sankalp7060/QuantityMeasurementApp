@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace QuantityMeasurementRepositoryLayer.Migrations
 {
     /// <inheritdoc />
-    public partial class PostgresInitialCreate : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -18,7 +18,7 @@ namespace QuantityMeasurementRepositoryLayer.Migrations
                     Id = table.Column<long>(type: "bigint", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     MeasurementId = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "GETUTCDATE()"),
                     OperationType = table.Column<int>(type: "int", nullable: false),
                     FirstOperandValue = table.Column<double>(type: "float", nullable: true),
                     FirstOperandUnit = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
@@ -52,9 +52,9 @@ namespace QuantityMeasurementRepositoryLayer.Migrations
                     PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     FirstName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
                     LastName = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP"),
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false),
                     LastLoginAt = table.Column<DateTime>(type: "datetime2", nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false, defaultValue: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
                     Role = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false, defaultValue: "User"),
                     FailedLoginAttempts = table.Column<int>(type: "int", nullable: false, defaultValue: 0),
                     LockoutEnd = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -77,7 +77,7 @@ namespace QuantityMeasurementRepositoryLayer.Migrations
                     RevokedByIp = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
                     ReplacedByToken = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: true),
                     CreatedByIp = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false, defaultValueSql: "CURRENT_TIMESTAMP")
+                    CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {

@@ -12,6 +12,8 @@ namespace QuantityMeasurementRepositoryLayer.Data
         public DbSet<UserEntity> Users { get; set; }
         public DbSet<RefreshTokenEntity> RefreshTokens { get; set; }
 
+        // REMOVED: public DbSet<AuditLogEntity> AuditLogs { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
@@ -21,13 +23,7 @@ namespace QuantityMeasurementRepositoryLayer.Data
             {
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.MeasurementId).IsRequired().HasMaxLength(50);
-
-                // FIX: Use PostgreSQL-compatible CURRENT_TIMESTAMP
-                entity
-                    .Property(e => e.CreatedAt)
-                    .IsRequired()
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
+                entity.Property(e => e.CreatedAt).IsRequired().HasDefaultValueSql("GETUTCDATE()");
                 entity.Property(e => e.OperationType).IsRequired().HasConversion<int>();
                 entity.Property(e => e.FirstOperandUnit).HasMaxLength(20);
                 entity.Property(e => e.FirstOperandCategory).HasMaxLength(20);
@@ -58,15 +54,9 @@ namespace QuantityMeasurementRepositoryLayer.Data
                 entity.Property(e => e.PasswordHash).IsRequired();
                 entity.Property(e => e.FirstName).HasMaxLength(50);
                 entity.Property(e => e.LastName).HasMaxLength(50);
-
-                // FIX: Use PostgreSQL-compatible CURRENT_TIMESTAMP for CreatedAt
-                entity
-                    .Property(e => e.CreatedAt)
-                    .IsRequired()
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
+                entity.Property(e => e.CreatedAt).IsRequired();
                 entity.Property(e => e.LastLoginAt);
-                entity.Property(e => e.IsActive).IsRequired().HasDefaultValue(true);
+                entity.Property(e => e.IsActive).IsRequired();
                 entity.Property(e => e.Role).HasMaxLength(50).HasDefaultValue("User");
                 entity.Property(e => e.FailedLoginAttempts).IsRequired().HasDefaultValue(0);
                 entity.Property(e => e.LockoutEnd);
@@ -86,13 +76,7 @@ namespace QuantityMeasurementRepositoryLayer.Data
                 entity.HasIndex(e => e.Token).IsUnique();
                 entity.Property(e => e.UserId).IsRequired();
                 entity.Property(e => e.ExpiresAt).IsRequired();
-
-                // FIX: Use PostgreSQL-compatible CURRENT_TIMESTAMP for CreatedAt
-                entity
-                    .Property(e => e.CreatedAt)
-                    .IsRequired()
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
+                entity.Property(e => e.CreatedAt).IsRequired();
                 entity.Property(e => e.RevokedByIp).HasMaxLength(50);
                 entity.Property(e => e.ReplacedByToken).HasMaxLength(200);
                 entity.Property(e => e.CreatedByIp).HasMaxLength(50);
