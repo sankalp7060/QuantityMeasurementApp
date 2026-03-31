@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "dgSpecHash": "m3wjl6IX/+o=",
+  "success": true,
+  "projectFilePath": "C:\\QuantityMeasurementApp\\QuantityMeasurementApp\\QuantityMeasurementModelLayer\\QuantityMeasurementModelLayer.csproj",
+  "expectedPackageFiles": [
+    "C:\\Users\\Lenovo\\.nuget\\packages\\bcrypt.net-next\\4.0.3\\bcrypt.net-next.4.0.3.nupkg.sha512",
+    "C:\\Users\\Lenovo\\.nuget\\packages\\microsoft.entityframeworkcore.abstractions\\8.0.0\\microsoft.entityframeworkcore.abstractions.8.0.0.nupkg.sha512",
+    "C:\\Users\\Lenovo\\.nuget\\packages\\system.componentmodel.annotations\\5.0.0\\system.componentmodel.annotations.5.0.0.nupkg.sha512"
+  ],
+  "logs": []
+}

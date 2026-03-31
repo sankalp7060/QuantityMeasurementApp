@@ -20,8 +20,14 @@ FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 EXPOSE 80
 EXPOSE 443
+EXPOSE 8080
 
+# Copy published app
 COPY --from=build /app/publish .
+
+# Set environment variable for port
+ENV ASPNETCORE_URLS=http://+:8080
+ENV ASPNETCORE_ENVIRONMENT=Production
 
 # Set entry point
 ENTRYPOINT ["dotnet", "QuantityMeasurementWebAPI.dll"]

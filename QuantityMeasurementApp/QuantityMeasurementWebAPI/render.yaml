@@ -1,15 +1,15 @@
 services:
   - type: web
     name: quantity-measurement-backend
-    runtime: dotnet
-    buildCommand: dotnet publish -c Release -o release
-    startCommand: cd QuantityMeasurementWebAPI && dotnet ./release/QuantityMeasurementWebAPI.dll
+    runtime: image
+    dockerfilePath: ./QuantityMeasurementWebAPI/Dockerfile
+    dockerContext: .
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
         value: Production
-      - key: JWT_KEY
-        sync: false
       - key: DB_CONNECTION_STRING
+        value: Host=dpg-d75bsne3jp1c73ckuotg-a.oregon-postgres.render.com;Database=quantity_measurement_db;Username=quantity_user;Password=zJLMIp3OBno4JJjmI0c36IreXiKgXarE;Ssl Mode=Require;Trust Server Certificate=true
+      - key: JWT_KEY
         sync: false
       - key: GOOGLE_CLIENT_ID
         sync: false

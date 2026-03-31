@@ -29,14 +29,47 @@ try
     }
 
     // ==================== DATABASE CONNECTION ====================
-    var dbConnectionString =
-        Environment.GetEnvironmentVariable("DB_CONNECTION_STRING")
-        ?? builder.Configuration.GetConnectionString("DefaultConnection");
+    string dbConnectionString = null;
+
+    // Try environment variable first
+    var envConnString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING");
+    Log.Information(
+        $"DB_CONNECTION_STRING from env: {(string.IsNullOrEmpty(envConnString) ? "NOT SET" : "SET (length: " + envConnString.Length + ")")}"
+    );
+
+    if (!string.IsNullOrEmpty(envConnString))
+    {
+        dbConnectionString = envConnString;
+        Log.Information("Using connection string from environment variable");
+    }
+    else
+    {
+        // Try appsettings.json
+        dbConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+        Log.Information("Using connection string from appsettings.json");
+    }
 
     if (string.IsNullOrEmpty(dbConnectionString))
     {
+        Log.Error("NO CONNECTION STRING FOUND! Check environment variables and appsettings.json");
         throw new InvalidOperationException("Database connection string is not configured");
     }
+
+    // Log full connection string for debugging
+    Log.Information($"FULL CONNECTION STRING: '{dbConnectionString}'");
+
+    // Detect PostgreSQL vs SQL Server
+    bool isOnRender = Environment.GetEnvironmentVariable("RENDER") == "true";
+    bool isPostgres =
+        isOnRender
+        || dbConnectionString.StartsWith("postgresql://")
+        || dbConnectionString.StartsWith("postgres://")
+        || dbConnectionString.Contains("Host=")
+        || dbConnectionString.Contains("Server=")
+        || dbConnectionString.Contains("postgres", StringComparison.OrdinalIgnoreCase);
+
+    Log.Information($"Database Type: {(isPostgres ? "PostgreSQL" : "SQL Server")}");
+    Log.Information($"Running on Render: {isOnRender}");
 
     // ==================== GOOGLE OAUTH ====================
     var googleClientId =
@@ -55,22 +88,41 @@ try
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
 
-    if (dbConnectionString.Contains("Host=") || dbConnectionString.Contains("postgres"))
+    // Database configuration
+    if (isPostgres)
     {
-        // Use PostgreSQL
+        Log.Information("Configuring PostgreSQL database...");
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseNpgsql(
                 dbConnectionString,
                 npgsqlOptions =>
                 {
                     npgsqlOptions.MigrationsAssembly("QuantityMeasurementRepositoryLayer");
+                    npgsqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null);
+                    npgsqlOptions.CommandTimeout(30);
+
+                    if (isOnRender)
+                    {
+                        npgsqlOptions.UseQuerySplittingBehavior(QuerySplittingBehavior.SplitQuery);
+                    }
                 }
             )
         );
+
+        // Optional: Add logging for SQL queries in development
+        if (builder.Environment.IsDevelopment())
+        {
+            builder.Services.AddDbContext<ApplicationDbContext>(options =>
+                options
+                    .UseNpgsql(dbConnectionString)
+                    .EnableSensitiveDataLogging()
+                    .EnableDetailedErrors()
+            );
+        }
     }
     else
     {
-        // Use SQL Server (for local development)
+        Log.Information("Configuring SQL Server database...");
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlServer(dbConnectionString)
         );
@@ -130,11 +182,29 @@ try
     // ==================== BUILD APP ====================
     var app = builder.Build();
 
-    // Database
-    using (var scope = app.Services.CreateScope())
+    // Force port binding for Render
+    if (Environment.GetEnvironmentVariable("RENDER") == "true")
     {
-        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        dbContext.Database.EnsureCreated();
+        var port = Environment.GetEnvironmentVariable("PORT") ?? "8080";
+        app.Urls.Add($"http://0.0.0.0:{port}");
+        Log.Information($"Binding to port: {port}");
+    }
+
+    // Database Migration/Creation
+    try
+    {
+        using (var scope = app.Services.CreateScope())
+        {
+            var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            Log.Information("Ensuring database is created...");
+            dbContext.Database.EnsureCreated();
+            Log.Information("Database check completed successfully");
+        }
+    }
+    catch (Exception ex)
+    {
+        Log.Error(ex, "Failed to create/verify database");
+        throw;
     }
 
     // Middleware
