@@ -40,38 +40,98 @@ namespace QuantityMeasurementBusinessLayer.Services
         {
             try
             {
+                _logger.LogInformation("=== REGISTRATION STARTED ===");
+                _logger.LogInformation(
+                    "Email: {Email}, Username: {Username}",
+                    request.Email,
+                    request.Username
+                );
+
+                // Step 1: Check if user exists
+                _logger.LogInformation("Step 1: Checking if user exists");
                 var userExists = await _authRepository.UserExistsAsync(
                     request.Username,
                     request.Email
                 );
                 if (userExists)
+                {
+                    _logger.LogWarning("User already exists: {Email}", request.Email);
                     return new AuthResponseDto { Success = false, Message = "User already exists" };
+                }
+                _logger.LogInformation("Step 1: User does not exist");
 
-                string passwordHash = BCrypt.Net.BCrypt.HashPassword(
-                    request.Password,
-                    workFactor: 12
-                );
+                // Step 2: Hash password
+                _logger.LogInformation("Step 2: Hashing password");
+                string passwordHash;
+                try
+                {
+                    passwordHash = BCrypt.Net.BCrypt.HashPassword(request.Password, workFactor: 12);
+                    _logger.LogInformation("Step 2: Password hashed successfully");
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "BCrypt hashing failed");
+                    return new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = $"Password hashing failed: {ex.Message}",
+                    };
+                }
 
+                // Step 3: Create user entity
+                _logger.LogInformation("Step 3: Creating user entity");
                 var user = new UserEntity
                 {
                     Username = request.Username,
                     Email = request.Email,
                     PasswordHash = passwordHash,
-                    FirstName = request.FirstName!,
-                    LastName = request.LastName!,
+                    FirstName = request.FirstName ?? string.Empty,
+                    LastName = request.LastName ?? string.Empty,
                     CreatedAt = DateTime.UtcNow,
                     IsActive = true,
                     Role = "User",
                     FailedLoginAttempts = 0,
                     LockoutEnd = null,
                 };
+                _logger.LogInformation("Step 3: User entity created");
 
-                var createdUser = await _authRepository.CreateUserAsync(user);
+                // Step 4: Save to database
+                _logger.LogInformation("Step 4: Saving user to database");
+                UserEntity createdUser;
+                try
+                {
+                    createdUser = await _authRepository.CreateUserAsync(user);
+                    _logger.LogInformation(
+                        "Step 4: User saved successfully with ID: {UserId}",
+                        createdUser.Id
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Database save failed");
+                    return new AuthResponseDto
+                    {
+                        Success = false,
+                        Message = $"Database error: {ex.Message}",
+                    };
+                }
 
+                // Step 5: Generate JWT token
+                _logger.LogInformation("Step 5: Generating JWT token");
                 var (accessToken, expiresAt) = GenerateJwtToken(createdUser);
-                var refreshToken = GenerateRefreshToken();
+                _logger.LogInformation("Step 5: JWT token generated");
 
+                // Step 6: Generate refresh token
+                _logger.LogInformation("Step 6: Generating refresh token");
+                var refreshToken = GenerateRefreshToken();
+                _logger.LogInformation("Step 6: Refresh token generated");
+
+                // Step 7: Save refresh token
+                _logger.LogInformation("Step 7: Saving refresh token");
                 await SaveRefreshTokenAsync(createdUser.Id, refreshToken, ipAddress);
+                _logger.LogInformation("Step 7: Refresh token saved");
+
+                _logger.LogInformation("=== REGISTRATION COMPLETED SUCCESSFULLY ===");
 
                 return new AuthResponseDto
                 {
@@ -85,8 +145,25 @@ namespace QuantityMeasurementBusinessLayer.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Registration error");
-                return new AuthResponseDto { Success = false, Message = "Registration failed" };
+                _logger.LogError(
+                    ex,
+                    "Registration error - Full exception: {ExceptionType} - {Message}",
+                    ex.GetType().Name,
+                    ex.Message
+                );
+                if (ex.InnerException != null)
+                {
+                    _logger.LogError(
+                        ex.InnerException,
+                        "Inner exception: {Message}",
+                        ex.InnerException.Message
+                    );
+                }
+                return new AuthResponseDto
+                {
+                    Success = false,
+                    Message = $"Registration failed: {ex.Message}",
+                };
             }
         }
 

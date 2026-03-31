@@ -58,24 +58,14 @@ namespace QuantityMeasurementRepositoryLayer.Data
                 entity.Property(e => e.PasswordHash).IsRequired();
                 entity.Property(e => e.FirstName).HasMaxLength(50);
                 entity.Property(e => e.LastName).HasMaxLength(50);
-
-                // FIX: Use PostgreSQL-compatible CURRENT_TIMESTAMP for CreatedAt
-                entity
-                    .Property(e => e.CreatedAt)
-                    .IsRequired()
-                    .HasDefaultValueSql("CURRENT_TIMESTAMP");
-
-                entity.Property(e => e.LastLoginAt);
-                entity.Property(e => e.IsActive).IsRequired().HasDefaultValue(true);
+                entity.Property(e => e.CreatedAt).HasDefaultValueSql("CURRENT_TIMESTAMP"); // PostgreSQL
+                entity.Property(e => e.IsActive).HasDefaultValue(true);
                 entity.Property(e => e.Role).HasMaxLength(50).HasDefaultValue("User");
-                entity.Property(e => e.FailedLoginAttempts).IsRequired().HasDefaultValue(0);
-                entity.Property(e => e.LockoutEnd);
+                entity.Property(e => e.FailedLoginAttempts).HasDefaultValue(0);
 
-                entity
-                    .HasMany(e => e.RefreshTokens)
-                    .WithOne(e => e.User)
-                    .HasForeignKey(e => e.UserId)
-                    .OnDelete(DeleteBehavior.Cascade);
+                // Remove any [Required] configurations that might cause issues
+                entity.Property(e => e.FirstName).IsRequired(false);
+                entity.Property(e => e.LastName).IsRequired(false);
             });
 
             // Configure RefreshTokenEntity
