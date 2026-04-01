@@ -2,6 +2,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
+using BCrypt.Net;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
@@ -17,7 +18,6 @@ namespace QuantityMeasurementBusinessLayer.Services
         private readonly IAuthRepository _authRepository;
         private readonly IConfiguration _configuration;
         private readonly ILogger<AuthService> _logger;
-        private readonly IAuditLogService _auditLogService;
 
         private const int MAX_FAILED_ATTEMPTS = 5;
         private const int LOCKOUT_MINUTES = 15;
@@ -25,20 +25,14 @@ namespace QuantityMeasurementBusinessLayer.Services
         public AuthService(
             IAuthRepository authRepository,
             IConfiguration configuration,
-            ILogger<AuthService> logger,
-            IAuditLogService auditLogService
+            ILogger<AuthService> logger
         )
         {
             _authRepository = authRepository;
             _configuration = configuration;
             _logger = logger;
-            _auditLogService = auditLogService;
         }
 
-        /// <summary>
-        /// Registers a new user with secure password hashing
-        /// BCrypt automatically generates and embeds a unique salt for each password
-        /// </summary>
         public async Task<AuthResponseDto> RegisterAsync(
             RegisterRequestDto request,
             string? ipAddress = null
@@ -46,37 +40,23 @@ namespace QuantityMeasurementBusinessLayer.Services
         {
             try
             {
-                // Check if user already exists
                 var userExists = await _authRepository.UserExistsAsync(
                     request.Username,
                     request.Email
                 );
                 if (userExists)
-                {
-                    return new AuthResponseDto
-                    {
-                        Success = false,
-                        Message = "User with this username or email already exists",
-                    };
-                }
+                    return new AuthResponseDto { Success = false, Message = "User already exists" };
 
-                // Hash the password using BCrypt with work factor 12
-                // BCrypt automatically:
-                // 1. Generates a cryptographically secure random salt (16 bytes)
-                // 2. Combines salt with password
-                // 3. Performs 2^12 iterations of the Blowfish cipher
-                // 4. Returns a single string containing: version + work factor + salt + hash
                 string passwordHash = BCrypt.Net.BCrypt.HashPassword(
                     request.Password,
                     workFactor: 12
                 );
 
-                // Create new user entity
                 var user = new UserEntity
                 {
                     Username = request.Username,
                     Email = request.Email,
-                    PasswordHash = passwordHash, // BCrypt hash already contains the salt
+                    PasswordHash = passwordHash,
                     FirstName = request.FirstName!,
                     LastName = request.LastName!,
                     CreatedAt = DateTime.UtcNow,
@@ -86,29 +66,12 @@ namespace QuantityMeasurementBusinessLayer.Services
                     LockoutEnd = null,
                 };
 
-                // Save user to database
                 var createdUser = await _authRepository.CreateUserAsync(user);
 
-                await _auditLogService.LogAsync(
-                    createdUser.Id.ToString(),
-                    createdUser.Username,
-                    "Register",
-                    "User",
-                    $"User registered with email: {createdUser.Email}",
-                    ipAddress
-                );
-
-                // Generate JWT tokens for immediate login after registration
                 var (accessToken, expiresAt) = GenerateJwtToken(createdUser);
                 var refreshToken = GenerateRefreshToken();
 
-                // Save refresh token
                 await SaveRefreshTokenAsync(createdUser.Id, refreshToken, ipAddress);
-
-                _logger.LogInformation(
-                    "User registered successfully: {Username}",
-                    request.Username
-                );
 
                 return new AuthResponseDto
                 {
@@ -122,23 +85,11 @@ namespace QuantityMeasurementBusinessLayer.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(
-                    ex,
-                    "Error during registration for user: {Username}",
-                    request.Username
-                );
-                return new AuthResponseDto
-                {
-                    Success = false,
-                    Message = "Registration failed: " + ex.Message,
-                };
+                _logger.LogError(ex, "Registration error");
+                return new AuthResponseDto { Success = false, Message = "Registration failed" };
             }
         }
 
-        /// <summary>
-        /// Authenticates a user with secure password verification
-        /// Includes account lockout protection against brute force attacks
-        /// </summary>
         public async Task<AuthResponseDto> LoginAsync(
             LoginRequestDto request,
             string? ipAddress = null
@@ -146,57 +97,19 @@ namespace QuantityMeasurementBusinessLayer.Services
         {
             try
             {
-                // Find user by username or email
                 var user = await _authRepository.GetUserByUsernameOrEmailAsync(
                     request.UsernameOrEmail
                 );
 
-                // User not found - use same message as wrong password to prevent user enumeration
                 if (user == null)
                 {
-                    _logger.LogWarning(
-                        "Login failed - user not found: {UsernameOrEmail}",
-                        request.UsernameOrEmail
-                    );
-
-                    // Add a small delay to prevent timing attacks
                     await Task.Delay(500);
-
-                    await _auditLogService.LogAsync(
-                        user?.Id.ToString() ?? "unknown",
-                        user?.Username ?? "unknown",
-                        "Login",
-                        "User",
-                        "Failed login attempt",
-                        ipAddress,
-                        false,
-                        "Invalid credentials"
-                    );
-
-                    return new AuthResponseDto
-                    {
-                        Success = false,
-                        Message = "Invalid username/email or password",
-                    };
+                    return new AuthResponseDto { Success = false, Message = "Invalid credentials" };
                 }
 
-                // Check if account is locked
                 if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTime.UtcNow)
-                {
-                    _logger.LogWarning(
-                        "Login failed - account locked for user: {Username}",
-                        user.Username
-                    );
-                    return new AuthResponseDto
-                    {
-                        Success = false,
-                        Message =
-                            $"Account is locked. Please try again after {user.LockoutEnd.Value.ToLocalTime()}.",
-                    };
-                }
+                    return new AuthResponseDto { Success = false, Message = "Account locked" };
 
-                // Verify password using BCrypt
-                // BCrypt automatically extracts the salt from the stored hash
                 bool isValidPassword = BCrypt.Net.BCrypt.Verify(
                     request.Password,
                     user.PasswordHash
@@ -204,85 +117,28 @@ namespace QuantityMeasurementBusinessLayer.Services
 
                 if (!isValidPassword)
                 {
-                    // Increment failed login attempts
                     user.FailedLoginAttempts++;
-
-                    // Lock account if too many failed attempts
                     if (user.FailedLoginAttempts >= MAX_FAILED_ATTEMPTS)
-                    {
                         user.LockoutEnd = DateTime.UtcNow.AddMinutes(LOCKOUT_MINUTES);
-                        _logger.LogWarning(
-                            "Account locked for user: {Username} due to {Attempts} failed attempts",
-                            user.Username,
-                            user.FailedLoginAttempts
-                        );
-                    }
 
                     await _authRepository.UpdateUserAsync(user);
-
-                    _logger.LogWarning(
-                        "Login failed - invalid password for user: {Username}",
-                        user.Username
-                    );
-
-                    // Add a small delay to prevent timing attacks
                     await Task.Delay(500);
-
-                    await _auditLogService.LogAsync(
-                        user?.Id.ToString() ?? "unknown",
-                        user?.Username ?? "unknown",
-                        "Login",
-                        "User",
-                        "Failed login attempt",
-                        ipAddress,
-                        false,
-                        "Invalid credentials"
-                    );
-
-                    return new AuthResponseDto
-                    {
-                        Success = false,
-                        Message = "Invalid username/email or password",
-                    };
+                    return new AuthResponseDto { Success = false, Message = "Invalid credentials" };
                 }
 
-                // Check if account is active
                 if (!user.IsActive)
-                {
-                    return new AuthResponseDto
-                    {
-                        Success = false,
-                        Message = "Account is deactivated. Please contact support.",
-                    };
-                }
+                    return new AuthResponseDto { Success = false, Message = "Account deactivated" };
 
-                // Reset failed login attempts on successful login
                 user.FailedLoginAttempts = 0;
                 user.LockoutEnd = null;
                 user.LastLoginAt = DateTime.UtcNow;
-
                 await _authRepository.UpdateUserAsync(user);
 
-                // Generate new tokens
                 var (accessToken, expiresAt) = GenerateJwtToken(user);
                 var refreshToken = GenerateRefreshToken();
 
-                // Revoke all previous refresh tokens (token rotation for security)
                 await _authRepository.RevokeAllUserTokensAsync(user.Id, ipAddress);
-
-                // Save new refresh token
                 await SaveRefreshTokenAsync(user.Id, refreshToken, ipAddress);
-
-                await _auditLogService.LogAsync(
-                    user.Id.ToString(),
-                    user.Username,
-                    "Login",
-                    "User",
-                    "User logged in successfully",
-                    ipAddress
-                );
-
-                _logger.LogInformation("User logged in successfully: {Username}", user.Username);
 
                 return new AuthResponseDto
                 {
@@ -296,23 +152,11 @@ namespace QuantityMeasurementBusinessLayer.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(
-                    ex,
-                    "Error during login for: {UsernameOrEmail}",
-                    request.UsernameOrEmail
-                );
-                return new AuthResponseDto
-                {
-                    Success = false,
-                    Message = "Login failed: " + ex.Message,
-                };
+                _logger.LogError(ex, "Login error");
+                return new AuthResponseDto { Success = false, Message = "Login failed" };
             }
         }
 
-        /// <summary>
-        /// Refreshes an expired access token using a valid refresh token
-        /// Implements token rotation for enhanced security
-        /// </summary>
         public async Task<AuthResponseDto> RefreshTokenAsync(
             string refreshToken,
             string? ipAddress = null
@@ -321,67 +165,45 @@ namespace QuantityMeasurementBusinessLayer.Services
             try
             {
                 var tokenEntity = await _authRepository.GetRefreshTokenAsync(refreshToken);
-
                 if (tokenEntity == null)
-                {
                     return new AuthResponseDto
                     {
                         Success = false,
                         Message = "Invalid refresh token",
                     };
-                }
 
-                // Check if token is expired
                 if (tokenEntity.ExpiresAt < DateTime.UtcNow)
-                {
                     return new AuthResponseDto
                     {
                         Success = false,
-                        Message = "Refresh token has expired",
+                        Message = "Refresh token expired",
                     };
-                }
 
-                // Check if token is revoked
                 if (tokenEntity.RevokedAt != null)
-                {
-                    _logger.LogWarning(
-                        "Attempt to use revoked token for user {UserId}",
-                        tokenEntity.UserId
-                    );
                     return new AuthResponseDto
                     {
                         Success = false,
-                        Message = "Refresh token has been revoked",
+                        Message = "Refresh token revoked",
                     };
-                }
 
                 var user = tokenEntity.User;
                 if (user == null || !user.IsActive)
-                {
-                    return new AuthResponseDto
-                    {
-                        Success = false,
-                        Message = "User not found or inactive",
-                    };
-                }
+                    return new AuthResponseDto { Success = false, Message = "User not found" };
 
-                // Generate new tokens (token rotation)
                 var (newAccessToken, expiresAt) = GenerateJwtToken(user);
                 var newRefreshToken = GenerateRefreshToken();
 
-                // Revoke current refresh token
                 tokenEntity.RevokedAt = DateTime.UtcNow;
                 tokenEntity.RevokedByIp = ipAddress;
                 tokenEntity.ReplacedByToken = newRefreshToken;
                 await _authRepository.RevokeRefreshTokenAsync(tokenEntity);
 
-                // Save new refresh token
                 await SaveRefreshTokenAsync(user.Id, newRefreshToken, ipAddress);
 
                 return new AuthResponseDto
                 {
                     Success = true,
-                    Message = "Token refreshed successfully",
+                    Message = "Token refreshed",
                     AccessToken = newAccessToken,
                     RefreshToken = newRefreshToken,
                     ExpiresAt = expiresAt,
@@ -390,18 +212,11 @@ namespace QuantityMeasurementBusinessLayer.Services
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during token refresh");
-                return new AuthResponseDto
-                {
-                    Success = false,
-                    Message = "Token refresh failed: " + ex.Message,
-                };
+                _logger.LogError(ex, "Refresh token error");
+                return new AuthResponseDto { Success = false, Message = "Token refresh failed" };
             }
         }
 
-        /// <summary>
-        /// Logs out a user by revoking their refresh tokens
-        /// </summary>
         public async Task<AuthResponseDto> LogoutAsync(
             string? refreshToken = null,
             long? userId = null,
@@ -412,7 +227,6 @@ namespace QuantityMeasurementBusinessLayer.Services
             {
                 if (!string.IsNullOrEmpty(refreshToken))
                 {
-                    // Revoke specific refresh token
                     var tokenEntity = await _authRepository.GetRefreshTokenAsync(refreshToken);
                     if (tokenEntity != null && tokenEntity.RevokedAt == null)
                     {
@@ -423,26 +237,18 @@ namespace QuantityMeasurementBusinessLayer.Services
                 }
                 else if (userId.HasValue)
                 {
-                    // Revoke all tokens for user
                     await _authRepository.RevokeAllUserTokensAsync(userId.Value, ipAddress);
                 }
 
-                return new AuthResponseDto { Success = true, Message = "Logged out successfully" };
+                return new AuthResponseDto { Success = true, Message = "Logged out" };
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error during logout");
-                return new AuthResponseDto
-                {
-                    Success = false,
-                    Message = "Logout failed: " + ex.Message,
-                };
+                _logger.LogError(ex, "Logout error");
+                return new AuthResponseDto { Success = false, Message = "Logout failed" };
             }
         }
 
-        /// <summary>
-        /// Gets user profile information
-        /// </summary>
         public async Task<UserInfoDto?> GetUserProfileAsync(long userId)
         {
             var user = await _authRepository.GetUserByIdAsync(userId);
@@ -451,17 +257,11 @@ namespace QuantityMeasurementBusinessLayer.Services
 
         #region Helper Methods
 
-        /// <summary>
-        /// Generates a JWT token for authenticated user
-        /// Uses secure signing key from configuration
-        /// </summary>
         private (string token, DateTime expiresAt) GenerateJwtToken(UserEntity user)
         {
-            // Get JWT key from configuration - in production this should be from environment variables
             var jwtKey =
                 _configuration["Jwt:Key"]
                 ?? throw new InvalidOperationException("JWT Key not configured");
-
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
@@ -476,7 +276,7 @@ namespace QuantityMeasurementBusinessLayer.Services
 
             var expiresAt = DateTime.UtcNow.AddMinutes(
                 _configuration.GetValue<int>("Jwt:TokenExpiryInMinutes", 15)
-            ); // Short-lived tokens (15 minutes)
+            );
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],
@@ -489,9 +289,6 @@ namespace QuantityMeasurementBusinessLayer.Services
             return (new JwtSecurityTokenHandler().WriteToken(token), expiresAt);
         }
 
-        /// <summary>
-        /// Generates a cryptographically secure random refresh token
-        /// </summary>
         private string GenerateRefreshToken()
         {
             var randomNumber = new byte[64];
@@ -500,9 +297,6 @@ namespace QuantityMeasurementBusinessLayer.Services
             return Convert.ToBase64String(randomNumber);
         }
 
-        /// <summary>
-        /// Saves a refresh token to the database
-        /// </summary>
         private async Task SaveRefreshTokenAsync(long userId, string token, string? ipAddress)
         {
             var refreshToken = new RefreshTokenEntity
@@ -519,9 +313,6 @@ namespace QuantityMeasurementBusinessLayer.Services
             await _authRepository.CreateRefreshTokenAsync(refreshToken);
         }
 
-        /// <summary>
-        /// Maps a UserEntity to UserInfoDto
-        /// </summary>
         private UserInfoDto MapToUserInfo(UserEntity user)
         {
             return new UserInfoDto

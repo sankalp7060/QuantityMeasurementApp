@@ -21,11 +21,11 @@ namespace QuantityMeasurementModelLayer.Entities
         [Required]
         public string PasswordHash { get; set; } = string.Empty;
 
-        [Required] // Made required to match UI
+        [Required]
         [MaxLength(50)]
         public string FirstName { get; set; } = string.Empty;
 
-        [Required] // Made required to match UI
+        [Required]
         [MaxLength(50)]
         public string LastName { get; set; } = string.Empty;
 

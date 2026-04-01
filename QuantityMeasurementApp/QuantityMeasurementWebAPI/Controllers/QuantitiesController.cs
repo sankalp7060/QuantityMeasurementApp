@@ -17,7 +17,6 @@ namespace QuantityMeasurementWebAPI.Controllers
     [Route("api/v1/[controller]")] // Sets the base route as api/v1/quantities (controller name without "Controller" suffix)
     [Produces("application/json")] // Specifies that all actions return JSON responses
     [SwaggerTag("Quantity measurement operations (compare, convert, add, subtract, divide)")] // Adds a tag in Swagger documentation
-    [Authorize]
     public class QuantitiesController : ControllerBase // Inherits from ControllerBase for MVC features without view support
     {
         // Private fields to store dependencies (readonly means they can only be set in constructor)
