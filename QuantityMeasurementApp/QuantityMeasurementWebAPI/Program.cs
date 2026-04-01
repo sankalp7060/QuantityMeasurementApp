@@ -121,11 +121,16 @@ try
         c.RoutePrefix = string.Empty;
     });
 
-    app.UseHttpsRedirection();
+    // Render handles HTTPS, so we can disable this to avoid "Failed to determine https port" warnings
+    // app.UseHttpsRedirection();
+
     app.UseCors("AllowFrontend");
     app.UseAuthentication();
     app.UseAuthorization();
     app.MapControllers();
+
+    // Add a root endpoint for Render health checks
+    app.MapGet("/", () => "Quantity Measurement API is running!");
 
     Log.Information("API Started Successfully");
     app.Run();
