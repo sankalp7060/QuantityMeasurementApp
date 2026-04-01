@@ -5,6 +5,7 @@ VisualStudioVersion = 17.0.31903.59
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuantityMeasurementApp", "QuantityMeasurementApp\QuantityMeasurementApp.csproj", "{A1B2C3D4-E5F6-7890-AB12-CD34EF567890}"
 EndProject
+
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuantityMeasurementModelLayer", "QuantityMeasurementModelLayer\QuantityMeasurementModelLayer.csproj", "{C3D4E5F6-A7B8-9012-CD34-EF5678901234}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "QuantityMeasurementRepositoryLayer", "QuantityMeasurementRepositoryLayer\QuantityMeasurementRepositoryLayer.csproj", "{D4E5F6A7-B8C9-0123-DE45-F67890123456}"
