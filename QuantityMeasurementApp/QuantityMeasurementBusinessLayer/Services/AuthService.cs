@@ -86,7 +86,7 @@ namespace QuantityMeasurementBusinessLayer.Services
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Registration error");
-                return new AuthResponseDto { Success = false, Message = "Registration failed" };
+                return new AuthResponseDto { Success = false, Message = "Registration failed: " + ex.Message + (ex.InnerException != null ? " | Inner: " + ex.InnerException.Message : "") };
             }
         }
 
