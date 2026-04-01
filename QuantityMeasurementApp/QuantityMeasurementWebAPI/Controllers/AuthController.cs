@@ -150,7 +150,7 @@ namespace QuantityMeasurementWebAPI.Controllers
         [AllowAnonymous]
         public IActionResult GoogleLogin()
         {
-            var backendUrl = _configuration["BackendURL"] ?? Environment.GetEnvironmentVariable("BACKEND_URL") ?? "https://quantitymeasurementapp-yffo.onrender.com";
+            var backendUrl = _configuration["BackendURL"] ?? Environment.GetEnvironmentVariable("BACKEND_URL") ?? "https://quantitymeasurementapp-k223.onrender.com";
             var redirectUri = $"{backendUrl}/api/v1/Auth/google/callback";
             var clientId = _configuration["Authentication:Google:ClientId"] ?? Environment.GetEnvironmentVariable("Authentication__Google__ClientId");
 
