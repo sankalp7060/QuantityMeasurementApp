@@ -150,8 +150,9 @@ namespace QuantityMeasurementWebAPI.Controllers
         [AllowAnonymous]
         public IActionResult GoogleLogin()
         {
-            var redirectUri = "http://localhost:5000/api/v1/Auth/google/callback";
-            var clientId = _configuration["Authentication:Google:ClientId"];
+            var backendUrl = _configuration["BackendURL"] ?? Environment.GetEnvironmentVariable("BACKEND_URL") ?? "https://quantitymeasurementapp-yffo.onrender.com";
+            var redirectUri = $"{backendUrl}/api/v1/Auth/google/callback";
+            var clientId = _configuration["Authentication:Google:ClientId"] ?? Environment.GetEnvironmentVariable("Authentication__Google__ClientId");
 
             var url =
                 $"https://accounts.google.com/o/oauth2/v2/auth?"
@@ -173,19 +174,20 @@ namespace QuantityMeasurementWebAPI.Controllers
             [FromQuery] string? error
         )
         {
+            var frontendUrl = _configuration["FrontendURL"] ?? Environment.GetEnvironmentVariable("FRONTEND_URL") ?? "https://quantitymeasurementapp-frontend.onrender.com";
             try
             {
                 if (!string.IsNullOrEmpty(error))
                 {
                     _logger.LogError("Google returned error: {Error}", error);
                     return Redirect(
-                        $"http://localhost:3000/login?error={Uri.EscapeDataString(error)}"
+                        $"{frontendUrl}/login?error={Uri.EscapeDataString(error)}"
                     );
                 }
 
                 if (string.IsNullOrEmpty(code))
                 {
-                    return Redirect("http://localhost:3000/login?error=No authorization code");
+                    return Redirect($"{frontendUrl}/login?error=No authorization code");
                 }
 
                 _logger.LogInformation("Received Google auth code, exchanging for tokens...");
@@ -195,7 +197,7 @@ namespace QuantityMeasurementWebAPI.Controllers
 
                 if (tokenResponse == null)
                 {
-                    return Redirect("http://localhost:3000/login?error=Failed to exchange code");
+                    return Redirect($"{frontendUrl}/login?error=Failed to exchange code");
                 }
 
                 // Get user info from Google
@@ -203,7 +205,7 @@ namespace QuantityMeasurementWebAPI.Controllers
 
                 if (userInfo == null || string.IsNullOrEmpty(userInfo.email))
                 {
-                    return Redirect("http://localhost:3000/login?error=Failed to get user info");
+                    return Redirect($"{frontendUrl}/login?error=Failed to get user info");
                 }
 
                 _logger.LogInformation("Google user: {Email}", userInfo.email);
@@ -250,13 +252,13 @@ namespace QuantityMeasurementWebAPI.Controllers
                 );
 
                 return Redirect(
-                    $"http://localhost:3000/auth/callback?accessToken={accessToken}&refreshToken={refreshToken}&user={userJson}"
+                    $"{frontendUrl}/auth/callback?accessToken={accessToken}&refreshToken={refreshToken}&user={userJson}"
                 );
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Google callback error");
-                return Redirect("http://localhost:3000/login?error=Internal server error");
+                return Redirect($"{frontendUrl}/login?error=Internal server error");
             }
         }
 
@@ -264,9 +266,11 @@ namespace QuantityMeasurementWebAPI.Controllers
 
         private async Task<GoogleTokenResponse?> ExchangeCodeForTokens(string code)
         {
-            var clientId = _configuration["Authentication:Google:ClientId"];
-            var clientSecret = _configuration["Authentication:Google:ClientSecret"];
-            var redirectUri = "http://localhost:5000/api/v1/Auth/google/callback";
+            var clientId = _configuration["Authentication:Google:ClientId"] ?? Environment.GetEnvironmentVariable("Authentication__Google__ClientId");
+            var clientSecret = _configuration["Authentication:Google:ClientSecret"] ?? Environment.GetEnvironmentVariable("Authentication__Google__ClientSecret");
+            
+            var backendUrl = _configuration["BackendURL"] ?? Environment.GetEnvironmentVariable("BACKEND_URL") ?? "https://quantitymeasurementapp-yffo.onrender.com";
+            var redirectUri = $"{backendUrl}/api/v1/Auth/google/callback";
 
             using var httpClient = new HttpClient();
             var content = new FormUrlEncodedContent(
