@@ -259,10 +259,10 @@ namespace QuantityMeasurementBusinessLayer.Services
 
         private (string token, DateTime expiresAt) GenerateJwtToken(UserEntity user)
         {
-            var jwtKey =
-                _configuration["Jwt:Key"]
-                ?? Environment.GetEnvironmentVariable("JWT_KEY")
-                ?? "DevelopmentOnlyInsecureKeyDoNotUseInProduction12345";
+            var jwtKey = _configuration["Jwt:Key"];
+            if (string.IsNullOrEmpty(jwtKey)) jwtKey = Environment.GetEnvironmentVariable("JWT_KEY");
+            if (string.IsNullOrEmpty(jwtKey)) jwtKey = "DevelopmentOnlyInsecureKeyDoNotUseInProduction12345";
+            
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
