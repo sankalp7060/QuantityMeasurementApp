@@ -261,7 +261,8 @@ namespace QuantityMeasurementBusinessLayer.Services
         {
             var jwtKey =
                 _configuration["Jwt:Key"]
-                ?? throw new InvalidOperationException("JWT Key not configured");
+                ?? Environment.GetEnvironmentVariable("JWT_KEY")
+                ?? "DevelopmentOnlyInsecureKeyDoNotUseInProduction12345";
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtKey));
             var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 
