@@ -142,6 +142,13 @@ finally
 // Helper: convert postgres://user:pass@host:port/db to Npgsql connection string
 static string ConvertDatabaseUrl(string databaseUrl)
 {
+    // If it's already a standard ADO.NET connection string, just return it
+    if (!databaseUrl.StartsWith("postgres://", StringComparison.OrdinalIgnoreCase) && 
+        !databaseUrl.StartsWith("postgresql://", StringComparison.OrdinalIgnoreCase))
+    {
+        return databaseUrl;
+    }
+
     var uri = new Uri(databaseUrl);
     var userInfo = uri.UserInfo.Split(':');
     var host = uri.Host;
